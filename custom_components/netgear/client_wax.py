@@ -4,7 +4,7 @@ import logging
 import aiohttp
 from aiohttp import hdrs
 from aiohttp.client_reqrep import ClientResponse
-from typing import Dict
+from typing import Dict, List
 
 from custom_components.netgear.client import NetgearClient, DeviceState, Ssid
 
@@ -99,7 +99,7 @@ class NetgearWaxClient(NetgearClient):
     # {"system":{"wlanSettings":{"wlanSettingTable":{"ssidSetDetails":
     # {"SSID3":{"wlan0":{"vap1":{"vapProfileStatus":"1", "ssid":"AT&T"}},
     #           "wlan1":{"vap1":{"vapProfileStatus":"1", "ssid":"AT&T"}}}}}}}}
-    async def async_get_ssids(self) -> [Ssid]:
+    async def async_get_ssids(self) -> List[Ssid]:
         """ async_get_ssids gets the SSIDs from the access point. Returns a list of ssid"""
         data = json.dumps({"system": {"wlanSettings": {"wlanSettingTable": {"ssidGetDetails": ""}}}})
         result = await self.async_post(data)
@@ -114,7 +114,7 @@ class NetgearWaxClient(NetgearClient):
 
         return ssids
 
-    async def async_enable_ssid(self, ssids: [Ssid], enable: bool):
+    async def async_enable_ssid(self, ssids: List[Ssid], enable: bool):
         """ async_enable_ssid will turn an ssid on or off. All supplied ssids but be the same ssid, but there
         can be more than one, for example 2.5 GHz and 5.0 GHz"""
         if len(ssids) == 0:
@@ -122,26 +122,20 @@ class NetgearWaxClient(NetgearClient):
             return
 
         ssid_id = ssids[0].ssid_id
-
+        status = "0" if enable else "1"
         details = {}
 
-        status = "0"
-        if enable:
-            status = "1"
-
         for ssid in ssids:
-            details[ssid.wlan_id] = {ssid.vap: {"vapProfileStatus": status, "ssid": ssid.ssid}}
+            details[ssid.wlan_id] = {ssid.vap: {"vapProfileStatus": status}}
 
-        data = {"system": {"wlanSettings": {"wlanSettingTable": {"ssidSetDetails": {ssid_id: details}}}}}
+        data = json.dumps({"system": {"wlanSettings": {"wlanSettingTable": {"ssidSetDetails": {ssid_id: details}}}}})
 
-        _LOGGER.debug("Setting SSID '%s' enable state to %s", ssids, enable)
+        _LOGGER.debug("Setting SSID '%s' enabled state to %s", ssids[0].ssid, enable)
         result = await self.async_post(data)
         _LOGGER.debug("result=%s", result)
 
-        return False
-
     @staticmethod
-    def load_wlan(ssid_index: str, wlan_id: str, vaps) -> [Ssid]:
+    def load_wlan(ssid_index: str, wlan_id: str, vaps) -> List[Ssid]:
         """
         Returns a dictionary of ssid unique IDs to the Ssid
 

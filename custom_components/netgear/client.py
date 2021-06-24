@@ -1,7 +1,7 @@
 """Netgear API Client."""
 import abc
 from dataclasses import dataclass
-from typing import Dict
+from typing import List
 
 
 @dataclass(unsafe_hash=True)
@@ -44,10 +44,10 @@ class NetgearClient(abc.ABC):
         pass
 
     @abc.abstractmethod
-    async def async_get_ssids(self) -> [Ssid]:
+    async def async_get_ssids(self) -> List[Ssid]:
         pass
 
     @abc.abstractmethod
-    async def async_enable_ssid(self, ssids: [Ssid], enable: bool):
+    async def async_enable_ssid(self, ssids: List[Ssid], enable: bool):
         """ async_enable_ssid will turn an ssid on or off"""
         pass
