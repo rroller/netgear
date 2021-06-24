@@ -122,11 +122,11 @@ class NetgearWaxClient(NetgearClient):
             return
 
         ssid_id = ssids[0].ssid_id
-        status = "0" if enable else "1"
+        status = "1" if enable else "0"
         details = {}
 
         for ssid in ssids:
-            details[ssid.wlan_id] = {ssid.vap: {"vapProfileStatus": status}}
+            details[ssid.wlan_id] = {ssid.vap: {"vapProfileStatus": status,  "ssid": ssid.ssid}}
 
         data = json.dumps({"system": {"wlanSettings": {"wlanSettingTable": {"ssidSetDetails": {ssid_id: details}}}}})
 

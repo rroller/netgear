@@ -1,10 +1,15 @@
 """Switch platform for netgear."""
+import logging
+import time
+from typing import Dict
 from homeassistant.core import HomeAssistant
 from homeassistant.components.switch import SwitchEntity
 from custom_components.netgear import NetgearDataUpdateCoordinator, Ssid
 
 from .const import DOMAIN, CONNECTIVITY_DEVICE_CLASS, WIFI_ICON
 from .entity import NetgearBaseEntity
+
+_LOGGER: logging.Logger = logging.getLogger(__package__)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
@@ -34,16 +39,22 @@ class NetgearSsidBinarySwitch(NetgearBaseEntity, SwitchEntity):
         self._ssid_id = ssid.ssid_id
         self._name = f"{coordinator.get_device_name()} {ssid.ssid}"
         self._unique_id = f"{coordinator.get_mac()}_{ssid.ssid_index}"
+        self._last_flipped_time: int = 0
+        self._last_flipped_state: bool = False
 
     async def async_turn_on(self, **kwargs):  # pylint: disable=unused-argument
         """Turn on the ssid"""
         ssids = self._coordinator.get_ssids_by_ssid_id(self._ssid_id)
+        self._last_flipped_time = time.time()
+        self._last_flipped_state = True
         await self.coordinator.client.async_enable_ssid(ssids, True)
         await self.coordinator.async_refresh()
 
     async def async_turn_off(self, **kwargs):  # pylint: disable=unused-argument
         """Turn off the ssid"""
         ssids = self._coordinator.get_ssids_by_ssid_id(self._ssid_id)
+        self._last_flipped_time = time.time()
+        self._last_flipped_state = False
         await self.coordinator.client.async_enable_ssid(ssids, False)
         await self.coordinator.async_refresh()
 
@@ -65,6 +76,14 @@ class NetgearSsidBinarySwitch(NetgearBaseEntity, SwitchEntity):
     def is_on(self):
         """ Return true if the ssid is enabled """
         ssids = self._coordinator.get_ssids_by_ssid_id(self._ssid_id)
+
+        # The API to enable or disable an ssid is very slow. It can take 20 seconds to complete.
+        # During that time the switch in the UI might jump back to the oposite state. So for for the
+        # time below, we'll just assume the state we attempted to put it in to avoid a weird UI issue
+        if time.time() - self._last_flipped_time <= 30:
+            _LOGGER.debug("Returning assumed state %s", self._last_flipped_state)
+            return self._last_flipped_state
+
         if len(ssids) > 0:
             return ssids[0].enabled
         return False
