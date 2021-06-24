@@ -1,0 +1,14 @@
+{
+    "name": "Netgear",
+    "hacs": "1.6.0",
+    "homeassistant": "2021.4.0",
+    "domains": [
+        "binary_sensor",
+        "switch"
+    ],
+    "iot_class": "Local Polling",
+    "render_readme": true,
+    "documentation": "https://github.com/rroller/netgear/blob/main/README.md",
+    "issue_tracker": "https://github.com/rroller/netgear/issues",
+    "codeowners": ["@rroller"]
+}
