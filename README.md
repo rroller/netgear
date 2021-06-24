@@ -1,5 +1,6 @@
 # Home Assistant Netgear Integration
 
+
 The `Netgear` [Home Assistant](https://www.home-assistant.io) integration allows you to integrate your Netgear access
 points into Home Assistant. Today this integration supports the WAX device models but is coded to make it easy to add
 other devices, simply implement the NetgearClient interface.
