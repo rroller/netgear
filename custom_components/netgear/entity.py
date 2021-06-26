@@ -30,5 +30,9 @@ class NetgearBaseEntity(CoordinatorEntity):
             "manufacturer": "Netgear",
             "sw_version": self._coordinator.get_firmware_version(),
         }
-
     # See extra_state_attributes  for extra data
+
+    @property
+    def should_poll(self) -> bool:
+        """Return True if entity has to be polled for state.  False if entity pushes its state to HA"""
+        return True

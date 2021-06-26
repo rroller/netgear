@@ -10,11 +10,13 @@ WIFI_ICON = "mdi:wifi"
 
 # Device classes - https://www.home-assistant.io/integrations/binary_sensor/#device-class
 CONNECTIVITY_DEVICE_CLASS = "connectivity"
+SAFETY_DEVICE_CLASS = "safety"
 
 # Platforms
 BINARY_SENSOR = "binary_sensor"
+SENSOR = "sensor"
 SWITCH = "switch"
-PLATFORMS = [BINARY_SENSOR, SWITCH]
+PLATFORMS = [BINARY_SENSOR, SENSOR, SWITCH]
 
 # Configuration and options
 CONF_ENABLED = "enabled"

@@ -2,7 +2,7 @@
 Custom integration to integrate Netgear WAX access points with Home Assistant.
 """
 import asyncio
-from typing import Dict, Any
+from typing import Dict, Any, List
 import logging
 
 from datetime import timedelta
@@ -87,7 +87,7 @@ class NetgearDataUpdateCoordinator(DataUpdateCoordinator):
         self._initialized = False
         self._mac = mac
         self._state: DeviceState
-        self._ssids: [Ssid]
+        self._ssids: List[Ssid]
 
         super().__init__(hass, _LOGGER, name=DOMAIN, update_interval=SCAN_INTERVAL_SECONDS)
 
@@ -112,7 +112,6 @@ class NetgearDataUpdateCoordinator(DataUpdateCoordinator):
         self.hass.bus.fire("netgear_event_received", data)
 
     def get_mac(self) -> str:
-        # return self._state.mac_address
         return self._mac
 
     def get_device_name(self) -> str:
@@ -124,15 +123,18 @@ class NetgearDataUpdateCoordinator(DataUpdateCoordinator):
     def get_firmware_version(self) -> str:
         return self._state.firmware_version
 
-    def get_ssids(self) -> [Ssid]:
+    def get_ssids(self) -> List[Ssid]:
         return self._ssids
 
-    def get_ssids_by_ssid_id(self, ssid_id: str) -> [Ssid]:
+    def get_ssids_by_ssid_id(self, ssid_id: str) -> List[Ssid]:
         ssids = []
         for ssid in self._ssids:
             if ssid_id == ssid.ssid_id:
                 ssids.append(ssid)
         return ssids
+
+    def is_firmware_update_available(self) -> bool:
+        return self._state.firmware_update_available
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

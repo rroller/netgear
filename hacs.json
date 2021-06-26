@@ -4,6 +4,7 @@
     "homeassistant": "2021.4.0",
     "domains": [
         "binary_sensor",
+        "sensor",
         "switch"
     ],
     "iot_class": "Local Polling",

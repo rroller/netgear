@@ -60,7 +60,7 @@ class NetgearSsidBinarySwitch(NetgearBaseEntity, SwitchEntity):
 
     @property
     def name(self):
-        """Return the name of the binary_sensor"""
+        """Return the name of the switch"""
         return self._name
 
     @property

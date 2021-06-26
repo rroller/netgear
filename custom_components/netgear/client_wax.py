@@ -85,7 +85,8 @@ class NetgearWaxClient(NetgearClient):
 
         result = await self.async_post(data)
 
-        monitor = result["system"]["monitor"]
+        system = result["system"]
+        monitor = system["monitor"]
 
         state = DeviceState()
         state.firmware_version = monitor["sysVersion"]
@@ -93,7 +94,7 @@ class NetgearWaxClient(NetgearClient):
         state.model = monitor["productId"]
         state.mac_address = monitor["ethernetMacAddress"]
         state.serial_number = monitor["sysSerialNumber"]
-        state.firmware_update_available = False
+        state.firmware_update_available = "FwUpdate" in system and "ImageAvailable" in system["FwUpdate"] and int(system["FwUpdate"]["ImageAvailable"]) > 0
         return state
 
     # {"system":{"wlanSettings":{"wlanSettingTable":{"ssidSetDetails":
@@ -126,7 +127,7 @@ class NetgearWaxClient(NetgearClient):
         details = {}
 
         for ssid in ssids:
-            details[ssid.wlan_id] = {ssid.vap: {"vapProfileStatus": status,  "ssid": ssid.ssid}}
+            details[ssid.wlan_id] = {ssid.vap: {"vapProfileStatus": status, "ssid": ssid.ssid}}
 
         data = json.dumps({"system": {"wlanSettings": {"wlanSettingTable": {"ssidSetDetails": {ssid_id: details}}}}})
 
