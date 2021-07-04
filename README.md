@@ -52,6 +52,9 @@ $ mv netgear_wax-main/custom_components/netgear_wax <home-assistant-install-dire
 
 Please let me know if you've tested with additional devices
 
+# Known issues
+* Toggling wifi on/off taks about 25 seconds. During that time the switch in the UI may toggle to the original setting until the underlying call comletes on the API. There's no harm but just a jaring user experience that needs to be worked out.
+
 # Preview
 
 ![netgear](https://user-images.githubusercontent.com/445655/124390453-935a9f80-dca0-11eb-9c75-fe989dd97b44.png)
