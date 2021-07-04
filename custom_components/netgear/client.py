@@ -1,7 +1,7 @@
 """Netgear API Client."""
 import abc
 from dataclasses import dataclass
-from typing import List
+from typing import List, Dict
 
 
 @dataclass(unsafe_hash=True)
@@ -31,7 +31,7 @@ class DeviceState:
     model: str = ""
     total_number_of_devices: int = 0
     # Key is: wlan0, wlan1, etc
-    stats: dict[str, Stat] = None
+    stats: Dict[str, Stat] = None
 
 
 class NetgearClient(abc.ABC):

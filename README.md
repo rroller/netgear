@@ -59,6 +59,17 @@ Switch |  Description |
 :------------ | :------------ |
 SSID | Enables or disables a WI-FI ssid
 
+## Sensors
+
+Sensor |  Description |
+:------------ | :------------ |
+Update Sensor | Shows when the device has a firmware update. Checked every few hours
+WLAN Channel Util | Shows how saturated the channel is
+Traffic Sensor | Shows a count of bytes sent over the wlan or lan interface
+Connected Clients Sensor | Shows a count of the total number of connected clients
+IP Address Sensor | Shows the device IP address
+MAC Sensor | Shows the device MAC
+
 # Local development
 
 If you wish to work on this component, the easiest way is to

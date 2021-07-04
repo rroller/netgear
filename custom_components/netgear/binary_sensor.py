@@ -1,9 +1,10 @@
 """Binary sensor platform for netgear."""
 import logging
+from typing import List
 
 from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.core import HomeAssistant
-from custom_components.netgear import NetgearDataUpdateCoordinator, Ssid
+from custom_components.netgear import NetgearDataUpdateCoordinator
 
 from .const import (
     DOMAIN, SAFETY_DEVICE_CLASS,
@@ -16,9 +17,9 @@ _LOGGER: logging.Logger = logging.getLogger(__package__)
 async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
     """Setup binary_sensor platform."""
     coordinator: NetgearDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
-    sensors: list[BinarySensorEntity] = []
+    sensors: List[BinarySensorEntity] = []
 
-    # sensors.append(NetgearBinarySensor(coordinator, entry, "Update Sensor"))
+    # sensors.append(NetgearBinarySensor(coordinator, entry, "Example Sensor"))
 
     async_add_devices(sensors)
 

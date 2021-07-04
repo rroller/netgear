@@ -3,7 +3,7 @@ Custom integration to integrate Netgear WAX access points with Home Assistant.
 """
 import asyncio
 import time
-from typing import Any, List
+from typing import Any, List, Dict
 import logging
 
 from datetime import timedelta
@@ -90,6 +90,7 @@ class NetgearDataUpdateCoordinator(DataUpdateCoordinator):
         self._state: DeviceState
         self._ssids: List[Ssid]
         self._firmware_last_checked: int = 0
+        self._address = address
 
         super().__init__(hass, _LOGGER, name=DOMAIN, update_interval=SCAN_INTERVAL_SECONDS)
 
@@ -127,6 +128,9 @@ class NetgearDataUpdateCoordinator(DataUpdateCoordinator):
     def get_mac(self) -> str:
         return self._mac
 
+    def get_ip_address(self) -> str:
+        return self._address
+
     def get_device_name(self) -> str:
         return self._state.device_name
 
@@ -152,7 +156,7 @@ class NetgearDataUpdateCoordinator(DataUpdateCoordinator):
     def total_number_of_devices(self) -> int:
         return self._state.total_number_of_devices
 
-    def get_stats(self) -> dict[str, Stat]:
+    def get_stats(self) -> Dict[str, Stat]:
         return self._state.stats
 
 

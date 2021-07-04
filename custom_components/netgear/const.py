@@ -10,6 +10,8 @@ WIFI_ICON = "mdi:wifi"
 DEVICES_ICON = "mdi:devices"
 UPDATE_ICON = "mdi:update"
 CHART_DONUT_ICON = "mdi:chart-donut"
+ROUTER_NETWORK_ICON = "mdi:router-network"
+LAN_ICON = "mdi:lan"
 
 # Device classes - https://www.home-assistant.io/integrations/binary_sensor/#device-class
 CONNECTIVITY_DEVICE_CLASS = "connectivity"

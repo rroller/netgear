@@ -8,7 +8,7 @@ from aiohttp.client_reqrep import ClientResponse
 from typing import List
 
 from custom_components.netgear.client import NetgearClient, DeviceState, Ssid, Stat
-from custom_components.netgear.utils import parse_human_string
+from custom_components.netgear.utils import parse_human_string, safe_cast
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
@@ -100,7 +100,6 @@ class NetgearWaxClient(NetgearClient):
         })
 
         result = await self.async_post(data)
-
         system = result["system"]
         monitor = system["monitor"]
 
@@ -118,9 +117,10 @@ class NetgearWaxClient(NetgearClient):
         if "stats" in monitor:
             stats = monitor["stats"]
             for lan in ["lan", "wlan0", "wlan1"]:
-                if lan in monitor["stats"]:
-                    state.stats[lan] = Stat(int(stats[lan]["channelUtil"]) if "channelUtil" in stats else 0,
-                                            parse_human_string(stats[lan]["traffic"]))
+                if lan in stats:
+                    state.stats[lan] = Stat(
+                        safe_cast(stats[lan]["channelUtil"], int, 0) if "channelUtil" in stats[lan] else 0,
+                        parse_human_string(stats[lan]["traffic"]))
 
         return state
 

@@ -72,7 +72,7 @@ class NetgearFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 {
                     vol.Required(CONF_USERNAME, default="admin"): str,
                     vol.Required(CONF_PASSWORD): str,
-                    vol.Required(CONF_ADDRESS, default="192.168.1.103"): str,
+                    vol.Required(CONF_ADDRESS): str,
                     vol.Required(CONF_PORT, default="443"): str,
                 }
             ),

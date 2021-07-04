@@ -1,15 +1,15 @@
 """Sensor platform for netgear."""
 import logging
+from typing import List
 
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.core import HomeAssistant
 from custom_components.netgear import NetgearDataUpdateCoordinator
 
 from .const import (
-    DOMAIN, SAFETY_DEVICE_CLASS, DEVICES_ICON, UPDATE_ICON, CHART_DONUT_ICON,
+    DOMAIN, SAFETY_DEVICE_CLASS, DEVICES_ICON, UPDATE_ICON, CHART_DONUT_ICON, ROUTER_NETWORK_ICON, LAN_ICON,
 )
 from .entity import NetgearBaseEntity
-from .utils import human_bytes
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
@@ -17,9 +17,11 @@ _LOGGER: logging.Logger = logging.getLogger(__package__)
 async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
     """Setup sensor platform."""
     coordinator: NetgearDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
-    sensors: list[SensorEntity] = [
+    sensors: List[SensorEntity] = [
         NetgearUpdateSensor(coordinator, entry, "Update"),
         NetgearTotalDevicesSensor(coordinator, entry, "Connected Clients"),
+        NetgearAddressSensor(coordinator, entry, "IP"),
+        NetgearMacSensor(coordinator, entry, "MAC"),
     ]
 
     stats = coordinator.get_stats()
@@ -120,7 +122,7 @@ class NetgearWlanUtilizationSensor(NetgearSensor):
 class NetgearInterfaceTrafficSensor(NetgearSensor):
     """ Sensor to report how many devices are connected """
 
-    def __init__(self, coordinator: NetgearDataUpdateCoordinator, config_entry, sensor_type: str, lan:str):
+    def __init__(self, coordinator: NetgearDataUpdateCoordinator, config_entry, sensor_type: str, lan: str):
         NetgearSensor.__init__(self, coordinator, config_entry, sensor_type)
         self._coordinator = coordinator
         self._lan = lan
@@ -132,3 +134,37 @@ class NetgearInterfaceTrafficSensor(NetgearSensor):
         if self._lan in stats:
             return self._coordinator.get_stats().get(self._lan).bytes_transferred
         return 0
+
+    @property
+    def icon(self) -> str:
+        return ROUTER_NETWORK_ICON
+
+
+class NetgearAddressSensor(NetgearSensor):
+    """ Sensor to show the IP address of the device """
+
+    def __init__(self, coordinator: NetgearDataUpdateCoordinator, config_entry, sensor_type: str):
+        NetgearSensor.__init__(self, coordinator, config_entry, sensor_type)
+
+    @property
+    def state(self):
+        return self._coordinator.get_ip_address()
+
+    @property
+    def icon(self) -> str:
+        return LAN_ICON
+
+
+class NetgearMacSensor(NetgearSensor):
+    """ Sensor to show the IP address of the device """
+
+    def __init__(self, coordinator: NetgearDataUpdateCoordinator, config_entry, sensor_type: str):
+        NetgearSensor.__init__(self, coordinator, config_entry, sensor_type)
+
+    @property
+    def state(self):
+        return self._coordinator.get_mac()
+
+    @property
+    def icon(self) -> str:
+        return LAN_ICON
