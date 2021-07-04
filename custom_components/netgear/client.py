@@ -15,6 +15,12 @@ class Ssid:
 
 
 @dataclass(unsafe_hash=True)
+class Stat:
+    utilization: int
+    bytes_transferred: int
+
+
+@dataclass(unsafe_hash=True)
 class DeviceState:
     ssid: str = ""
     serial_number: str = ""
@@ -23,6 +29,9 @@ class DeviceState:
     firmware_update_available: bool = False
     device_name: str = ""
     model: str = ""
+    total_number_of_devices: int = 0
+    # Key is: wlan0, wlan1, etc
+    stats: dict[str, Stat] = None
 
 
 class NetgearClient(abc.ABC):
@@ -50,4 +59,9 @@ class NetgearClient(abc.ABC):
     @abc.abstractmethod
     async def async_enable_ssid(self, ssids: List[Ssid], enable: bool):
         """ async_enable_ssid will turn an ssid on or off"""
+        pass
+
+    @abc.abstractmethod
+    async def check_for_firmware_updates(self):
+        """ check_for_firmware_updates tells the device to check for firmware updates"""
         pass

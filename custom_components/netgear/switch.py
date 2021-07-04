@@ -1,7 +1,8 @@
 """Switch platform for netgear."""
 import logging
 import time
-from typing import Dict
+from typing import List
+
 from homeassistant.core import HomeAssistant
 from homeassistant.components.switch import SwitchEntity
 from custom_components.netgear import NetgearDataUpdateCoordinator, Ssid
@@ -17,7 +18,7 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
     coordinator: NetgearDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
 
     added = set()
-    switches: list[NetgearSsidBinarySwitch] = []
+    switches: List[NetgearSsidBinarySwitch] = []
     for ssid in coordinator.get_ssids():
         if ssid.ssid is not None and ssid.ssid not in added:
             added.add(ssid.ssid)
@@ -44,19 +45,21 @@ class NetgearSsidBinarySwitch(NetgearBaseEntity, SwitchEntity):
 
     async def async_turn_on(self, **kwargs):  # pylint: disable=unused-argument
         """Turn on the ssid"""
-        ssids = self._coordinator.get_ssids_by_ssid_id(self._ssid_id)
         self._last_flipped_time = time.time()
         self._last_flipped_state = True
-        await self.coordinator.client.async_enable_ssid(ssids, True)
-        await self.coordinator.async_refresh()
+        self.hass.async_create_task(self.work_on(True))
 
     async def async_turn_off(self, **kwargs):  # pylint: disable=unused-argument
         """Turn off the ssid"""
-        ssids = self._coordinator.get_ssids_by_ssid_id(self._ssid_id)
         self._last_flipped_time = time.time()
         self._last_flipped_state = False
-        await self.coordinator.client.async_enable_ssid(ssids, False)
-        await self.coordinator.async_refresh()
+        self.hass.async_create_task(self.work_on(False))
+
+    async def work_on(self, enabled: bool):
+        ssids = self._coordinator.get_ssids_by_ssid_id(self._ssid_id)
+        await self._coordinator.client.async_enable_ssid(ssids, enabled)
+        await self._coordinator.async_refresh()
+
 
     @property
     def name(self):

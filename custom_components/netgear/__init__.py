@@ -2,18 +2,20 @@
 Custom integration to integrate Netgear WAX access points with Home Assistant.
 """
 import asyncio
-from typing import Dict, Any, List
+import time
+from typing import Any, List
 import logging
 
 from datetime import timedelta
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import CALLBACK_TYPE, Config, HomeAssistant
+from homeassistant.core import Config, HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
-from homeassistant.helpers.aiohttp_client import async_aiohttp_proxy_web, async_get_clientsession
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP
 
+from .client import Stat, NetgearClient
 from .client_wax import NetgearWaxClient, DeviceState, Ssid
 
 from .const import (
@@ -63,9 +65,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     # https://developers.home-assistant.io/docs/config_entries_index/
     for platform in PLATFORMS:
         if entry.options.get(platform, True):
-            hass.async_add_job(
-                hass.config_entries.async_forward_entry_setup(entry, platform)
-            )
+            hass.async_add_job(hass.config_entries.async_forward_entry_setup(entry, platform))
 
     entry.add_update_listener(async_reload_entry)
 
@@ -81,13 +81,15 @@ class NetgearDataUpdateCoordinator(DataUpdateCoordinator):
 
     def __init__(self, hass: HomeAssistant, address: str, port: int, username: str, password: str, mac: str) -> None:
         """Initialize"""
-        self.client: NetgearWaxClient = NetgearWaxClient(username, password, address, port,
-                                                         async_get_clientsession(hass, verify_ssl=False))
+        # TODO: Support multiple clients here
+        self.client: NetgearClient = NetgearWaxClient(username, password, address, port,
+                                                      async_get_clientsession(hass, verify_ssl=False))
         self.platforms = []
         self._initialized = False
         self._mac = mac
         self._state: DeviceState
         self._ssids: List[Ssid]
+        self._firmware_last_checked: int = 0
 
         super().__init__(hass, _LOGGER, name=DOMAIN, update_interval=SCAN_INTERVAL_SECONDS)
 
@@ -102,10 +104,21 @@ class NetgearDataUpdateCoordinator(DataUpdateCoordinator):
             self._state = await self.client.async_get_state()
             self._ssids = await self.client.async_get_ssids()
             self._initialized = True
-            return self._state
         except Exception as exception:
             _LOGGER.debug("Failed to read current state", exc_info=exception)
             raise UpdateFailed() from exception
+
+        # Only check for firmware updates every 6 hours
+        try:
+            if (time.time() - self._firmware_last_checked) > 21600:
+                self._firmware_last_checked = time.time()
+                await self.client.check_for_firmware_updates()
+        except Exception as exception:
+            # Not vital for this API to run so we'll pass on errors
+            _LOGGER.info("Failed to check for firmware updates", exc_info=exception)
+            pass
+
+        return self._state
 
     def on_receive(self, data_bytes: bytes):
         data = data_bytes.decode("utf-8", errors="ignore")
@@ -135,6 +148,12 @@ class NetgearDataUpdateCoordinator(DataUpdateCoordinator):
 
     def is_firmware_update_available(self) -> bool:
         return self._state.firmware_update_available
+
+    def total_number_of_devices(self) -> int:
+        return self._state.total_number_of_devices
+
+    def get_stats(self) -> dict[str, Stat]:
+        return self._state.stats
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

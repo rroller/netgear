@@ -7,6 +7,9 @@ ISSUE_URL = "https://github.com/rroller/netgear/issues"
 
 # Icons - https://materialdesignicons.com/
 WIFI_ICON = "mdi:wifi"
+DEVICES_ICON = "mdi:devices"
+UPDATE_ICON = "mdi:update"
+CHART_DONUT_ICON = "mdi:chart-donut"
 
 # Device classes - https://www.home-assistant.io/integrations/binary_sensor/#device-class
 CONNECTIVITY_DEVICE_CLASS = "connectivity"

@@ -1,12 +1,14 @@
 """Netgear API Client."""
 import json
 import logging
+
 import aiohttp
 from aiohttp import hdrs
 from aiohttp.client_reqrep import ClientResponse
-from typing import Dict, List
+from typing import List
 
-from custom_components.netgear.client import NetgearClient, DeviceState, Ssid
+from custom_components.netgear.client import NetgearClient, DeviceState, Ssid, Stat
+from custom_components.netgear.utils import parse_human_string
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
@@ -76,6 +78,20 @@ class NetgearWaxClient(NetgearClient):
                     "sysSerialNumber": "",
                     "ethernetMacAddress": "",
                     "sysVersion": "",
+                    "FiveGhzSupport": {},
+                    "stats": {
+                        "lan": {
+                            "traffic": "",
+                        },
+                        "wlan0": {
+                            "traffic": "",
+                            "channelUtil": "",
+                        },
+                        "wlan1": {
+                            "traffic": "",
+                            "channelUtil": "",
+                        }
+                    },
                 },
                 "basicSettings": {
                     "apName": "",
@@ -94,7 +110,18 @@ class NetgearWaxClient(NetgearClient):
         state.model = monitor["productId"]
         state.mac_address = monitor["ethernetMacAddress"]
         state.serial_number = monitor["sysSerialNumber"]
-        state.firmware_update_available = "FwUpdate" in system and "ImageAvailable" in system["FwUpdate"] and int(system["FwUpdate"]["ImageAvailable"]) > 0
+        state.total_number_of_devices = monitor["totalNumberOfDevices"]
+        state.firmware_update_available = "FwUpdate" in system and "ImageAvailable" in system["FwUpdate"] and int(
+            system["FwUpdate"]["ImageAvailable"]) > 0
+        state.stats = {}
+
+        if "stats" in monitor:
+            stats = monitor["stats"]
+            for lan in ["lan", "wlan0", "wlan1"]:
+                if lan in monitor["stats"]:
+                    state.stats[lan] = Stat(int(stats[lan]["channelUtil"]) if "channelUtil" in stats else 0,
+                                            parse_human_string(stats[lan]["traffic"]))
+
         return state
 
     # {"system":{"wlanSettings":{"wlanSettingTable":{"ssidSetDetails":
@@ -134,6 +161,14 @@ class NetgearWaxClient(NetgearClient):
         _LOGGER.debug("Setting SSID '%s' enabled state to %s", ssids[0].ssid, enable)
         result = await self.async_post(data)
         _LOGGER.debug("result=%s", result)
+
+    async def check_for_firmware_updates(self):
+        """ check_for_firmware_updates tells the device to check for firmware updates"""
+        _LOGGER.debug("Checking for firmware updates")
+        data = json.dumps({"method": 5, "upgradeCheck": 0})
+        response = await self._session.post(url=self._base_url + "/LogFile", data=data,
+                                            cookies=self.get_auth_cookie(), headers=self.get_auth_header())
+        response.raise_for_status()
 
     @staticmethod
     def load_wlan(ssid_index: str, wlan_id: str, vaps) -> List[Ssid]:
