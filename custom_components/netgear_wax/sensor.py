@@ -1,10 +1,10 @@
-"""Sensor platform for netgear."""
+"""Sensor platform for netgear_wax."""
 import logging
 from typing import List
 
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.core import HomeAssistant
-from custom_components.netgear import NetgearDataUpdateCoordinator
+from custom_components.netgear_wax import NetgearDataUpdateCoordinator
 
 from .const import (
     DOMAIN, SAFETY_DEVICE_CLASS, DEVICES_ICON, UPDATE_ICON, CHART_DONUT_ICON, ROUTER_NETWORK_ICON, LAN_ICON,
@@ -37,7 +37,7 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
 
 
 class NetgearSensor(NetgearBaseEntity, SensorEntity):
-    """ netgear sensor """
+    """ netgear_wax sensor """
 
     def __init__(self, coordinator: NetgearDataUpdateCoordinator, config_entry, sensor_type: str):
         NetgearBaseEntity.__init__(self, coordinator, config_entry)

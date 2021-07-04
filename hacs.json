@@ -1,5 +1,5 @@
 {
-    "name": "Netgear",
+    "name": "Netgear WAX",
     "hacs": "1.6.0",
     "homeassistant": "2021.4.0",
     "domains": [

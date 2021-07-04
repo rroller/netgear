@@ -1,10 +1,9 @@
-"""Binary sensor platform for netgear."""
+"""Binary sensor platform for netgear_wax."""
 import logging
 from typing import List
 
 from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.core import HomeAssistant
-from custom_components.netgear import NetgearDataUpdateCoordinator
 
 from .const import (
     DOMAIN, SAFETY_DEVICE_CLASS,
@@ -25,7 +24,7 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
 
 
 class NetgearBinarySensor(NetgearBaseEntity, BinarySensorEntity):
-    """ netgear binary_sensor """
+    """ netgear_wax binary_sensor """
 
     def __init__(self, coordinator: NetgearDataUpdateCoordinator, config_entry, sensor_type: str):
         NetgearBaseEntity.__init__(self, coordinator, config_entry)

@@ -23,10 +23,10 @@ To manually install:
 $ wget https://github.com/rroller/netgear/archive/netgear-main.zip
 
 # Unzip the archive
-$ unzip netgear-main.zip
+$ unzip netgear_wax-main.zip
 
-# Move the netgear directory into your custom_components directory in your Home Assistant install
-$ mv netgear-main/custom_components/netgear <home-assistant-install-directory>/config/custom_components/
+# Move the netgear_wax directory into your custom_components directory in your Home Assistant install
+$ mv netgear_wax-main/custom_components/netgear_wax <home-assistant-install-directory>/config/custom_components/
 ```
 
 > :warning: **After executing one of the above installation methods, restart Home Assistant. Also clear your browser cache before proceeding to the next step, as the integration may not be visible otherwise.**
@@ -94,5 +94,5 @@ Add to your configuration.yaml:
 logger:
   default: info
   logs:
-    custom_components.netgear: debug
+    custom_components.netgear_wax: debug
 ```

@@ -1,1 +1,1 @@
-"""Tests for netgear integration."""
+"""Tests for netgear_wax integration."""

@@ -1,8 +1,8 @@
 """Constants for Netgear."""
 # Base component constants
-NAME = "Netgear"
-DOMAIN = "netgear"
-ATTRIBUTION = "Data provided by https://ronnieroller.com"
+NAME = "Netgear WAX"
+DOMAIN = "netgear_wax"
+ATTRIBUTION = "Data provided by local device"
 ISSUE_URL = "https://github.com/rroller/netgear/issues"
 
 # Icons - https://materialdesignicons.com/
@@ -30,9 +30,6 @@ CONF_PASSWORD = "password"
 CONF_ADDRESS = "address"
 CONF_PORT = "port"
 CONF_MAC = "mac"
-
-# Defaults
-DEFAULT_NAME = "Netgear"
 
 STARTUP_MESSAGE = f"""
 -------------------------------------------------------------------

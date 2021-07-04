@@ -7,8 +7,8 @@ from aiohttp import hdrs
 from aiohttp.client_reqrep import ClientResponse
 from typing import List
 
-from custom_components.netgear.client import NetgearClient, DeviceState, Ssid, Stat
-from custom_components.netgear.utils import parse_human_string, safe_cast
+from custom_components.netgear_wax.client import NetgearClient, DeviceState, Ssid, Stat
+from custom_components.netgear_wax.utils import parse_human_string, safe_cast
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 

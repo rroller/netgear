@@ -1,11 +1,11 @@
-"""Switch platform for netgear."""
+"""Switch platform for netgear_wax."""
 import logging
 import time
 from typing import List
 
 from homeassistant.core import HomeAssistant
 from homeassistant.components.switch import SwitchEntity
-from custom_components.netgear import NetgearDataUpdateCoordinator, Ssid
+from custom_components.netgear_wax import NetgearDataUpdateCoordinator, Ssid
 
 from .const import DOMAIN, CONNECTIVITY_DEVICE_CLASS, WIFI_ICON
 from .entity import NetgearBaseEntity
@@ -29,7 +29,7 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
 
 
 class NetgearSsidBinarySwitch(NetgearBaseEntity, SwitchEntity):
-    """netgear SSID switch class. Used to enable or disable Wi-Fi SSIDs"""
+    """netgear_wax SSID switch class. Used to enable or disable Wi-Fi SSIDs"""
 
     def __init__(self, coordinator: NetgearDataUpdateCoordinator, config_entry, ssid: Ssid):
         NetgearBaseEntity.__init__(self, coordinator, config_entry)

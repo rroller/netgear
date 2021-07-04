@@ -1,4 +1,4 @@
-"""Tests for netgear api."""
+"""Tests for netgear_wax api."""
 
 async def test_api(hass, aioclient_mock, caplog):
     """Test calls."""
