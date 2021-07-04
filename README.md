@@ -51,6 +51,9 @@ $ mv netgear-main/custom_components/netgear <home-assistant-install-directory>/c
 
 Please let me know if you've tested with additional devices
 
+# Preview
+![netgear](https://user-images.githubusercontent.com/445655/124390453-935a9f80-dca0-11eb-9c75-fe989dd97b44.png)
+
 # Entities
 
 ## Switches
