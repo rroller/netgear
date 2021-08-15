@@ -11,8 +11,13 @@ Supports turning on WI-FI SSIDs. This is particular useful if you want to automa
 ### HACS install
 
 To install with [HACS](https://hacs.xyz/):
-
-TODO: Waiting for this integration to be published in HACS.
+1. Click on HACS in the Home Assistant menu
+1. Click on Integrations
+1. Click the EXPLORE & ADD REPOSITORIES button
+1. Search for `Netgear`
+1. Click the INSTALL THIS REPOSITORY IN HACS button
+1. Restart Home Assistant
+Configure the access point by going to Configurations -> Integrations -> ADD INTERATIONS button, search for Netgear and configure the device.
 
 ### Manual install
 
