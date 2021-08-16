@@ -1,8 +1,6 @@
 # Home Assistant Netgear Integration
 
-The `Netgear` [Home Assistant](https://www.home-assistant.io) integration allows you to integrate your Netgear WAX
-access points into Home Assistant. Today this integration supports the WAX device models but is coded to make it easy to
-add other devices in the future.
+The `Netgear` [Home Assistant](https://www.home-assistant.io) integration is a completely local (no cloud) integration that allows you to integrate your Netgear WAX access points into Home Assistant. Today this integration supports the WAX device models but is coded to make it easy to add other devices in the future.
 
 Supports turning on WI-FI SSIDs. This is particular useful if you want to automate turning on your guest WI-FI network.
 
