@@ -51,6 +51,7 @@ $ mv netgear_wax-main/custom_components/netgear_wax <home-assistant-install-dire
 
 * WAX-610
 * WAX-620
+* WAC-510
 * Probably the other WA* devices but I haven't tested them
 
 Please let me know if you've tested with additional devices
