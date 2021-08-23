@@ -5,6 +5,7 @@ from typing import List
 from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.core import HomeAssistant
 
+from . import NetgearDataUpdateCoordinator
 from .const import (
     DOMAIN, SAFETY_DEVICE_CLASS,
 )
