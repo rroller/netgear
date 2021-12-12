@@ -4,6 +4,7 @@ The `Netgear` [Home Assistant](https://www.home-assistant.io) integration is a c
 
 Supports turning on WI-FI SSIDs. This is particular useful if you want to automate turning on your guest WI-FI network.
 
+
 ## Installation
 
 ### HACS install
