@@ -129,6 +129,9 @@ class NetgearDataUpdateCoordinator(DataUpdateCoordinator):
         return self._mac
 
     def get_ip_address(self) -> str:
+        """
+        Returns the IP address, example: 192.168.1.2
+        """
         return self._address
 
     def get_device_name(self) -> str:

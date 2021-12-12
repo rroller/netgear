@@ -28,6 +28,7 @@ class NetgearBaseEntity(CoordinatorEntity):
             "name": self._coordinator.get_device_name(),
             "model": self._coordinator.get_model(),
             "manufacturer": "Netgear",
+            "configuration_url": "https://" + self._coordinator.get_ip_address(),
             "sw_version": self._coordinator.get_firmware_version(),
         }
     # See extra_state_attributes  for extra data
