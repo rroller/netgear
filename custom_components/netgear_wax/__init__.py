@@ -101,23 +101,26 @@ class NetgearDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def _async_update_data(self) -> DeviceState:
         """Reload information by fetching from the API"""
-        try:
-            self._state = await self.client.async_get_state()
-            self._ssids = await self.client.async_get_ssids()
-            self._initialized = True
-        except Exception as exception:
-            _LOGGER.debug("Failed to read current state", exc_info=exception)
-            raise UpdateFailed() from exception
-
         # Only check for firmware updates every 6 hours
+        check_firmware = False
         try:
-            if (time.time() - self._firmware_last_checked) > 21600:
+            check_firmware = (time.time() - self._firmware_last_checked) > 21600
+
+            if check_firmware:
                 self._firmware_last_checked = time.time()
                 await self.client.check_for_firmware_updates()
         except Exception as exception:
             # Not vital for this API to run so we'll pass on errors
             _LOGGER.info("Failed to check for firmware updates", exc_info=exception)
             pass
+
+        try:
+            self._state = await self.client.async_get_state(check_firmware)
+            self._ssids = await self.client.async_get_ssids()
+            self._initialized = True
+        except Exception as exception:
+            _LOGGER.debug("Failed to read current state", exc_info=exception)
+            raise UpdateFailed() from exception
 
         return self._state
 
