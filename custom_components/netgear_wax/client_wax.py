@@ -1,13 +1,15 @@
 """Netgear API Client."""
 import json
 import logging
+import time
 
 import aiohttp
 from aiohttp import hdrs
 from aiohttp.client_reqrep import ClientResponse
-from typing import List
+from typing import List, Optional
 
 from custom_components.netgear_wax.client import NetgearClient, DeviceState, Ssid, Stat
+from custom_components.netgear_wax.const import STATE_REQUEST_DATA
 from custom_components.netgear_wax.utils import parse_human_string, safe_cast
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
@@ -25,6 +27,8 @@ class NetgearWaxClient(NetgearClient):
         self._base_url = "https://{0}:{1}".format(address, port)
         self._lhttpdsid = ""
         self._security_token = ""
+        self._internet_connectivity_check: Optional[float] = None
+
         _LOGGER.debug("Creating client with username %s", username)
 
     async def async_login(self):
@@ -64,42 +68,29 @@ class NetgearWaxClient(NetgearClient):
                                             cookies=self.get_auth_cookie(), headers=self.get_auth_header())
         response.raise_for_status()
 
-    async def async_get_state(self) -> DeviceState:
+    async def async_get_state(self, check_firmware: Optional[bool] = False) -> DeviceState:
         """ async_get_state gets the current state from the access point (mac address, name, firmware, etc) """
-        data = json.dumps({
-            "system": {
-                "FwUpdate": {
-                    "ImageAvailable": "",
-                    "ImageVersion": ""},
-                "monitor": {
-                    "productId": "",
-                    "internetConnectivityStatus": "",
-                    "totalNumberOfDevices": "",
-                    "sysSerialNumber": "",
-                    "ethernetMacAddress": "",
-                    "sysVersion": "",
-                    "FiveGhzSupport": {},
-                    "stats": {
-                        "lan": {
-                            "traffic": "",
-                        },
-                        "wlan0": {
-                            "traffic": "",
-                            "channelUtil": "",
-                        },
-                        "wlan1": {
-                            "traffic": "",
-                            "channelUtil": "",
-                        }
-                    },
-                },
-                "basicSettings": {
-                    "apName": "",
-                },
-            }
-        })
+        data = STATE_REQUEST_DATA.copy()
 
-        result = await self.async_post(data)
+        if (self._internet_connectivity_check is None or time.time() - self._internet_connectivity_check) > 3600:
+            system_data = data["system"]
+            monitor_data = system_data["monitor"]
+            monitor_data["internetConnectivityStatus"] = ""
+
+            self._internet_connectivity_check = time.time()
+
+        if check_firmware:
+            system_data = data["system"]
+            system_data["FwUpdate"] = {
+                    "ImageAvailable": "",
+                    "ImageVersion": ""
+            }
+
+            self._firmware_update_check = time.time()
+
+        request_data = json.dumps(data)
+
+        result = await self.async_post(request_data)
         system = result["system"]
         monitor = system["monitor"]
 

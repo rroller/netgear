@@ -39,3 +39,32 @@ If you have any issues with this you need to open an issue here:
 {ISSUE_URL}
 -------------------------------------------------------------------
 """
+
+STATE_REQUEST_DATA = {
+    "system": {
+        "monitor": {
+            "productId": "",
+            "totalNumberOfDevices": "",
+            "sysSerialNumber": "",
+            "ethernetMacAddress": "",
+            "sysVersion": "",
+            "FiveGhzSupport": {},
+            "stats": {
+                "lan": {
+                    "traffic": "",
+                },
+                "wlan0": {
+                    "traffic": "",
+                    "channelUtil": "",
+                },
+                "wlan1": {
+                    "traffic": "",
+                    "channelUtil": "",
+                }
+            },
+        },
+        "basicSettings": {
+            "apName": "",
+        },
+    }
+}

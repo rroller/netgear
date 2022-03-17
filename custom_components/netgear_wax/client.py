@@ -1,7 +1,7 @@
 """Netgear API Client."""
 import abc
 from dataclasses import dataclass
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 
 @dataclass(unsafe_hash=True)
@@ -49,7 +49,7 @@ class NetgearClient(abc.ABC):
         pass
 
     @abc.abstractmethod
-    async def async_get_state(self) -> DeviceState:
+    async def async_get_state(self, check_firmware: Optional[bool] = False) -> DeviceState:
         pass
 
     @abc.abstractmethod
