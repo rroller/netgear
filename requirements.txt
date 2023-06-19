@@ -1,5 +1,4 @@
-homeassistant~=2021.5.3
-voluptuous~=0.12.1
-aiohttp~=3.7.4.post0
-yarl~=1.6.3
-requests~=2.25.1
+homeassistant==2023.6.0
+colorlog==6.7.0
+pip>=21.0,<23.2
+ruff==0.0.267
