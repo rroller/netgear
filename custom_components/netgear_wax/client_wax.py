@@ -16,9 +16,16 @@ _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 
 class NetgearWaxClient(NetgearClient):
-    """ NetgearWaxClient is the client for accessing Netgear WAX access points """
+    """NetgearWaxClient is the client for accessing Netgear WAX access points"""
 
-    def __init__(self, username: str, password: str, address: str, port: int, session: aiohttp.ClientSession) -> None:
+    def __init__(
+        self,
+        username: str,
+        password: str,
+        address: str,
+        port: int,
+        session: aiohttp.ClientSession,
+    ) -> None:
         super().__init__()
         self._username = username
         self._password = password
@@ -32,7 +39,7 @@ class NetgearWaxClient(NetgearClient):
         _LOGGER.debug("Creating client with username %s", username)
 
     async def async_login(self):
-        """ async_login sets the lhttpdsid and security token which are needed to issues requests """
+        """async_login sets the lhttpdsid and security token which are needed to issues requests"""
         _LOGGER.debug("Logging in with username %s", self._username)
 
         # Login step 1 - Get lhttpdsid cookie
@@ -45,9 +52,21 @@ class NetgearWaxClient(NetgearClient):
         response.raise_for_status()
 
         # Login step 2 - Get security token
-        data = json.dumps({"system": {"basicSettings": {"adminName": self._username, "adminPasswd": self._password}}})
-        response = await self._session.post(url=self._base_url + "/socketCommunication", data=data,
-                                            cookies={"lhttpdsid": lhttpdsid})
+        data = json.dumps(
+            {
+                "system": {
+                    "basicSettings": {
+                        "adminName": self._username,
+                        "adminPasswd": self._password,
+                    }
+                }
+            }
+        )
+        response = await self._session.post(
+            url=self._base_url + "/socketCommunication",
+            data=data,
+            cookies={"lhttpdsid": lhttpdsid},
+        )
         response.raise_for_status()
         _LOGGER.debug("login security token response=%s", await response.text())
 
@@ -61,18 +80,27 @@ class NetgearWaxClient(NetgearClient):
         self._security_token = security_token
 
     async def async_logout(self):
-        """ async_logout issues a log out action for the currently auth session"""
+        """async_logout issues a log out action for the currently auth session"""
         _LOGGER.debug("Logging out with username %s", self._username)
         data = json.dumps({self._username: self._username})
-        response = await self._session.post(url=self._base_url + "/logout", data=data,
-                                            cookies=self.get_auth_cookie(), headers=self.get_auth_header())
+        response = await self._session.post(
+            url=self._base_url + "/logout",
+            data=data,
+            cookies=self.get_auth_cookie(),
+            headers=self.get_auth_header(),
+        )
         response.raise_for_status()
 
-    async def async_get_state(self, check_firmware: Optional[bool] = False) -> DeviceState:
-        """ async_get_state gets the current state from the access point (mac address, name, firmware, etc) """
+    async def async_get_state(
+        self, check_firmware: Optional[bool] = False
+    ) -> DeviceState:
+        """async_get_state gets the current state from the access point (mac address, name, firmware, etc)"""
         data = STATE_REQUEST_DATA.copy()
 
-        if (self._internet_connectivity_check is None or time.time() - self._internet_connectivity_check) > 3600:
+        if (
+            self._internet_connectivity_check is None
+            or time.time() - self._internet_connectivity_check
+        ) > 3600:
             system_data = data["system"]
             monitor_data = system_data["monitor"]
             monitor_data["internetConnectivityStatus"] = ""
@@ -81,10 +109,7 @@ class NetgearWaxClient(NetgearClient):
 
         if check_firmware:
             system_data = data["system"]
-            system_data["FwUpdate"] = {
-                    "ImageAvailable": "",
-                    "ImageVersion": ""
-            }
+            system_data["FwUpdate"] = {"ImageAvailable": "", "ImageVersion": ""}
 
             self._firmware_update_check = time.time()
 
@@ -101,8 +126,11 @@ class NetgearWaxClient(NetgearClient):
         state.mac_address = monitor["ethernetMacAddress"]
         state.serial_number = monitor["sysSerialNumber"]
         state.total_number_of_devices = monitor["totalNumberOfDevices"]
-        state.firmware_update_available = "FwUpdate" in system and "ImageAvailable" in system["FwUpdate"] and int(
-            system["FwUpdate"]["ImageAvailable"]) > 0
+        state.firmware_update_available = (
+            "FwUpdate" in system
+            and "ImageAvailable" in system["FwUpdate"]
+            and int(system["FwUpdate"]["ImageAvailable"]) > 0
+        )
         state.stats = {}
 
         if "stats" in monitor:
@@ -110,8 +138,11 @@ class NetgearWaxClient(NetgearClient):
             for lan in ["lan", "wlan0", "wlan1"]:
                 if lan in stats:
                     state.stats[lan] = Stat(
-                        safe_cast(stats[lan]["channelUtil"], int, 0) if "channelUtil" in stats[lan] else 0,
-                        parse_human_string(stats[lan]["traffic"]))
+                        safe_cast(stats[lan]["channelUtil"], int, 0)
+                        if "channelUtil" in stats[lan]
+                        else 0,
+                        parse_human_string(stats[lan]["traffic"]),
+                    )
 
         return state
 
@@ -119,8 +150,10 @@ class NetgearWaxClient(NetgearClient):
     # {"SSID3":{"wlan0":{"vap1":{"vapProfileStatus":"1", "ssid":"AT&T"}},
     #           "wlan1":{"vap1":{"vapProfileStatus":"1", "ssid":"AT&T"}}}}}}}}
     async def async_get_ssids(self) -> List[Ssid]:
-        """ async_get_ssids gets the SSIDs from the access point. Returns a list of ssid"""
-        data = json.dumps({"system": {"wlanSettings": {"wlanSettingTable": {"ssidGetDetails": ""}}}})
+        """async_get_ssids gets the SSIDs from the access point. Returns a list of ssid"""
+        data = json.dumps(
+            {"system": {"wlanSettings": {"wlanSettingTable": {"ssidGetDetails": ""}}}}
+        )
         result = await self.async_post(data)
         details = result["system"]["wlanSettings"]["wlanSettingTable"]["ssidGetDetails"]
 
@@ -129,12 +162,14 @@ class NetgearWaxClient(NetgearClient):
             for i in range(4):
                 wlan_id = "wlan" + str(i)
                 if wlan_id in ssid_value:
-                    ssids.extend(self.load_wlan(ssid_index, wlan_id, ssid_value[wlan_id]))
+                    ssids.extend(
+                        self.load_wlan(ssid_index, wlan_id, ssid_value[wlan_id])
+                    )
 
         return ssids
 
     async def async_enable_ssid(self, ssids: List[Ssid], enable: bool):
-        """ async_enable_ssid will turn an ssid on or off. All supplied ssids but be the same ssid, but there
+        """async_enable_ssid will turn an ssid on or off. All supplied ssids but be the same ssid, but there
         can be more than one, for example 2.5 GHz and 5.0 GHz"""
         if len(ssids) == 0:
             _LOGGER.warning("No ssids supplied")
@@ -145,20 +180,34 @@ class NetgearWaxClient(NetgearClient):
         details = {}
 
         for ssid in ssids:
-            details[ssid.wlan_id] = {ssid.vap: {"vapProfileStatus": status, "ssid": ssid.ssid}}
+            details[ssid.wlan_id] = {
+                ssid.vap: {"vapProfileStatus": status, "ssid": ssid.ssid}
+            }
 
-        data = json.dumps({"system": {"wlanSettings": {"wlanSettingTable": {"ssidSetDetails": {ssid_id: details}}}}})
+        data = json.dumps(
+            {
+                "system": {
+                    "wlanSettings": {
+                        "wlanSettingTable": {"ssidSetDetails": {ssid_id: details}}
+                    }
+                }
+            }
+        )
 
         _LOGGER.debug("Setting SSID '%s' enabled state to %s", ssids[0].ssid, enable)
         result = await self.async_post(data)
         _LOGGER.debug("result=%s", result)
 
     async def check_for_firmware_updates(self):
-        """ check_for_firmware_updates tells the device to check for firmware updates"""
+        """check_for_firmware_updates tells the device to check for firmware updates"""
         _LOGGER.debug("Checking for firmware updates")
         data = json.dumps({"method": 5, "upgradeCheck": 0})
-        response = await self._session.post(url=self._base_url + "/LogFile", data=data,
-                                            cookies=self.get_auth_cookie(), headers=self.get_auth_header())
+        response = await self._session.post(
+            url=self._base_url + "/LogFile",
+            data=data,
+            cookies=self.get_auth_cookie(),
+            headers=self.get_auth_header(),
+        )
         response.raise_for_status()
 
     @staticmethod
@@ -188,8 +237,12 @@ class NetgearWaxClient(NetgearClient):
 
     async def async_post(self, data: {}):
         async def call():
-            return await self._session.post(url=self._base_url + "/socketCommunication", data=data,
-                                            cookies=self.get_auth_cookie(), headers=self.get_auth_header())
+            return await self._session.post(
+                url=self._base_url + "/socketCommunication",
+                data=data,
+                cookies=self.get_auth_cookie(),
+                headers=self.get_auth_header(),
+            )
 
         response = await call()
         text = await response.text()
@@ -230,5 +283,7 @@ class NetgearWaxClient(NetgearClient):
             key_value_pairs = cookie_headers.split(";")
             for kv_line in key_value_pairs:
                 kv_pair = kv_line.split("=", maxsplit=1)
-                cookies[kv_pair[0].strip()] = "" if len(kv_pair) <= 1 else kv_pair[1].strip()
+                cookies[kv_pair[0].strip()] = (
+                    "" if len(kv_pair) <= 1 else kv_pair[1].strip()
+                )
         return cookies

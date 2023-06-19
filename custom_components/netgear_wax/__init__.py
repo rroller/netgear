@@ -25,7 +25,8 @@ from .const import (
     CONF_ADDRESS,
     DOMAIN,
     PLATFORMS,
-    STARTUP_MESSAGE, CONF_MAC,
+    STARTUP_MESSAGE,
+    CONF_MAC,
 )
 
 SCAN_INTERVAL_SECONDS = timedelta(seconds=60)
@@ -54,7 +55,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     port = int(entry.data.get(CONF_PORT))
     mac = entry.data.get(CONF_MAC)
 
-    coordinator = NetgearDataUpdateCoordinator(hass, address, port, username, password, mac)
+    coordinator = NetgearDataUpdateCoordinator(
+        hass, address, port, username, password, mac
+    )
     await coordinator.async_config_entry_first_refresh()
 
     if not coordinator.last_update_success:
@@ -65,7 +68,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     # https://developers.home-assistant.io/docs/config_entries_index/
     for platform in PLATFORMS:
         if entry.options.get(platform, True):
-            hass.async_add_job(hass.config_entries.async_forward_entry_setup(entry, platform))
+            hass.async_add_job(
+                hass.config_entries.async_forward_entry_setup(entry, platform)
+            )
 
     entry.add_update_listener(async_reload_entry)
 
@@ -79,11 +84,24 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 class NetgearDataUpdateCoordinator(DataUpdateCoordinator):
     """Class to manage fetching data from the Netgear API."""
 
-    def __init__(self, hass: HomeAssistant, address: str, port: int, username: str, password: str, mac: str) -> None:
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        address: str,
+        port: int,
+        username: str,
+        password: str,
+        mac: str,
+    ) -> None:
         """Initialize"""
         # TODO: Support multiple clients here
-        self.client: NetgearClient = NetgearWaxClient(username, password, address, port,
-                                                      async_get_clientsession(hass, verify_ssl=False))
+        self.client: NetgearClient = NetgearWaxClient(
+            username,
+            password,
+            address,
+            port,
+            async_get_clientsession(hass, verify_ssl=False),
+        )
         self.platforms = []
         self._initialized = False
         self._mac = mac
@@ -92,10 +110,12 @@ class NetgearDataUpdateCoordinator(DataUpdateCoordinator):
         self._firmware_last_checked: int = 0
         self._address = address
 
-        super().__init__(hass, _LOGGER, name=DOMAIN, update_interval=SCAN_INTERVAL_SECONDS)
+        super().__init__(
+            hass, _LOGGER, name=DOMAIN, update_interval=SCAN_INTERVAL_SECONDS
+        )
 
     async def async_stop(self, event: Any):
-        """ Stop anything we need to stop """
+        """Stop anything we need to stop"""
         # Log out is important, the device limits concurrent logins
         await self.client.async_logout()
 

@@ -7,7 +7,8 @@ from homeassistant.core import HomeAssistant
 
 from . import NetgearDataUpdateCoordinator
 from .const import (
-    DOMAIN, SAFETY_DEVICE_CLASS,
+    DOMAIN,
+    SAFETY_DEVICE_CLASS,
 )
 from .entity import NetgearBaseEntity
 
@@ -25,9 +26,11 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
 
 
 class NetgearBinarySensor(NetgearBaseEntity, BinarySensorEntity):
-    """ netgear_wax binary_sensor """
+    """netgear_wax binary_sensor"""
 
-    def __init__(self, coordinator: NetgearDataUpdateCoordinator, config_entry, sensor_type: str):
+    def __init__(
+        self, coordinator: NetgearDataUpdateCoordinator, config_entry, sensor_type: str
+    ):
         NetgearBaseEntity.__init__(self, coordinator, config_entry)
         BinarySensorEntity.__init__(self)
         self._coordinator = coordinator

@@ -35,7 +35,7 @@ class DeviceState:
 
 
 class NetgearClient(abc.ABC):
-    """ NetgearWaxClient is the client for accessing Netgear WAX access points """
+    """NetgearWaxClient is the client for accessing Netgear WAX access points"""
 
     def __init__(self) -> None:
         pass
@@ -49,7 +49,9 @@ class NetgearClient(abc.ABC):
         pass
 
     @abc.abstractmethod
-    async def async_get_state(self, check_firmware: Optional[bool] = False) -> DeviceState:
+    async def async_get_state(
+        self, check_firmware: Optional[bool] = False
+    ) -> DeviceState:
         pass
 
     @abc.abstractmethod
@@ -58,10 +60,10 @@ class NetgearClient(abc.ABC):
 
     @abc.abstractmethod
     async def async_enable_ssid(self, ssids: List[Ssid], enable: bool):
-        """ async_enable_ssid will turn an ssid on or off"""
+        """async_enable_ssid will turn an ssid on or off"""
         pass
 
     @abc.abstractmethod
     async def check_for_firmware_updates(self):
-        """ check_for_firmware_updates tells the device to check for firmware updates"""
+        """check_for_firmware_updates tells the device to check for firmware updates"""
         pass
