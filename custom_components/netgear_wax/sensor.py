@@ -146,10 +146,6 @@ class NetgearWlanUtilizationSensor(NetgearSensor):
         return CHART_DONUT_ICON
 
     @property
-    def state_class(self):
-        return SensorStateClass.MEASUREMENT
-
-    @property
     def native_unit_of_measurement(self) -> str | None:
         """Return native unit of measurement of sensor."""
         return PERCENTAGE
