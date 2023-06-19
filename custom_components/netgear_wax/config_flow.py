@@ -1,21 +1,20 @@
 """Adds config flow (UI flow) for Netgear WAX access points"""
 import logging
 
-import voluptuous as vol
-
 from homeassistant import config_entries
 from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
+import voluptuous as vol
 
 from .client_wax import NetgearWaxClient
 from .const import (
-    CONF_PASSWORD,
-    CONF_USERNAME,
     CONF_ADDRESS,
+    CONF_MAC,
+    CONF_PASSWORD,
     CONF_PORT,
+    CONF_USERNAME,
     DOMAIN,
     PLATFORMS,
-    CONF_MAC,
 )
 
 # https://developers.home-assistant.io/docs/data_entry_flow_index

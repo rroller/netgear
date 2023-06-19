@@ -1,6 +1,8 @@
 """NetgearBaseEntity class"""
-from custom_components.netgear_wax import NetgearDataUpdateCoordinator
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+
+from custom_components.netgear_wax import NetgearDataUpdateCoordinator
+
 from .const import DOMAIN
 
 
@@ -31,6 +33,7 @@ class NetgearBaseEntity(CoordinatorEntity):
             "configuration_url": "https://" + self._coordinator.get_ip_address(),
             "sw_version": self._coordinator.get_firmware_version(),
         }
+
     # See extra_state_attributes  for extra data
 
     @property

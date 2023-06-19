@@ -3,11 +3,12 @@ import logging
 import time
 from typing import List
 
-from homeassistant.core import HomeAssistant
 from homeassistant.components.switch import SwitchEntity
+from homeassistant.core import HomeAssistant
+
 from custom_components.netgear_wax import NetgearDataUpdateCoordinator, Ssid
 
-from .const import DOMAIN, CONNECTIVITY_DEVICE_CLASS, WIFI_ICON
+from .const import CONNECTIVITY_DEVICE_CLASS, DOMAIN, WIFI_ICON
 from .entity import NetgearBaseEntity
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
@@ -31,7 +32,9 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
 class NetgearSsidBinarySwitch(NetgearBaseEntity, SwitchEntity):
     """netgear_wax SSID switch class. Used to enable or disable Wi-Fi SSIDs"""
 
-    def __init__(self, coordinator: NetgearDataUpdateCoordinator, config_entry, ssid: Ssid):
+    def __init__(
+        self, coordinator: NetgearDataUpdateCoordinator, config_entry, ssid: Ssid
+    ):
         NetgearBaseEntity.__init__(self, coordinator, config_entry)
         SwitchEntity.__init__(self)
 
@@ -60,7 +63,6 @@ class NetgearSsidBinarySwitch(NetgearBaseEntity, SwitchEntity):
         await self._coordinator.client.async_enable_ssid(ssids, enabled)
         await self._coordinator.async_refresh()
 
-
     @property
     def name(self):
         """Return the name of the switch"""
@@ -77,7 +79,7 @@ class NetgearSsidBinarySwitch(NetgearBaseEntity, SwitchEntity):
 
     @property
     def is_on(self):
-        """ Return true if the ssid is enabled """
+        """Return true if the ssid is enabled"""
         ssids = self._coordinator.get_ssids_by_ssid_id(self._ssid_id)
 
         # The API to enable or disable an ssid is very slow. It can take 20 seconds to complete.
