@@ -1,6 +1,8 @@
 """NetgearBaseEntity class"""
-from custom_components.netgear_wax import NetgearDataUpdateCoordinator
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+
+from custom_components.netgear_wax import NetgearDataUpdateCoordinator
+
 from .const import DOMAIN
 
 

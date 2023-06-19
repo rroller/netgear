@@ -2,13 +2,13 @@
 import json
 import logging
 import time
+from typing import List, Optional
 
 import aiohttp
 from aiohttp import hdrs
 from aiohttp.client_reqrep import ClientResponse
-from typing import List, Optional
 
-from custom_components.netgear_wax.client import NetgearClient, DeviceState, Ssid, Stat
+from custom_components.netgear_wax.client import DeviceState, NetgearClient, Ssid, Stat
 from custom_components.netgear_wax.const import STATE_REQUEST_DATA
 from custom_components.netgear_wax.utils import parse_human_string, safe_cast
 

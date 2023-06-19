@@ -2,32 +2,21 @@
 Custom integration to integrate Netgear WAX access points with Home Assistant.
 """
 import asyncio
-import time
-from typing import Any, List, Dict
-import logging
-
 from datetime import timedelta
+import logging
+import time
+from typing import Any, Dict, List
 
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import EVENT_HOMEASSISTANT_STOP
 from homeassistant.core import Config, HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
-from homeassistant.const import EVENT_HOMEASSISTANT_STOP
 
-from .client import Stat, NetgearClient
-from .client_wax import NetgearWaxClient, DeviceState, Ssid
-
-from .const import (
-    CONF_PASSWORD,
-    CONF_PORT,
-    CONF_USERNAME,
-    CONF_ADDRESS,
-    DOMAIN,
-    PLATFORMS,
-    STARTUP_MESSAGE,
-    CONF_MAC,
-)
+from .client import NetgearClient, Stat
+from .client_wax import DeviceState, NetgearWaxClient, Ssid
+from .const import CONF_ADDRESS, CONF_MAC, CONF_PASSWORD, CONF_PORT, CONF_USERNAME, DOMAIN, PLATFORMS, STARTUP_MESSAGE
 
 SCAN_INTERVAL_SECONDS = timedelta(seconds=60)
 

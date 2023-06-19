@@ -3,11 +3,12 @@ import logging
 import time
 from typing import List
 
-from homeassistant.core import HomeAssistant
 from homeassistant.components.switch import SwitchEntity
+from homeassistant.core import HomeAssistant
+
 from custom_components.netgear_wax import NetgearDataUpdateCoordinator, Ssid
 
-from .const import DOMAIN, CONNECTIVITY_DEVICE_CLASS, WIFI_ICON
+from .const import CONNECTIVITY_DEVICE_CLASS, DOMAIN, WIFI_ICON
 from .entity import NetgearBaseEntity
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)

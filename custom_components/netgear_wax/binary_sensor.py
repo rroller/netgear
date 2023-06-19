@@ -6,10 +6,7 @@ from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.core import HomeAssistant
 
 from . import NetgearDataUpdateCoordinator
-from .const import (
-    DOMAIN,
-    SAFETY_DEVICE_CLASS,
-)
+from .const import DOMAIN, SAFETY_DEVICE_CLASS
 from .entity import NetgearBaseEntity
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
