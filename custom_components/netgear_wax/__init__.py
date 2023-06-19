@@ -16,7 +16,16 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 
 from .client import NetgearClient, Stat
 from .client_wax import DeviceState, NetgearWaxClient, Ssid
-from .const import CONF_ADDRESS, CONF_MAC, CONF_PASSWORD, CONF_PORT, CONF_USERNAME, DOMAIN, PLATFORMS, STARTUP_MESSAGE
+from .const import (
+    CONF_ADDRESS,
+    CONF_MAC,
+    CONF_PASSWORD,
+    CONF_PORT,
+    CONF_USERNAME,
+    DOMAIN,
+    PLATFORMS,
+    STARTUP_MESSAGE,
+)
 
 SCAN_INTERVAL_SECONDS = timedelta(seconds=60)
 

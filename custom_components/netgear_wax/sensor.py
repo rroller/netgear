@@ -2,13 +2,24 @@
 import logging
 from typing import List
 
-from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorStateClass
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntity,
+    SensorStateClass,
+)
 from homeassistant.const import PERCENTAGE, UnitOfInformation
 from homeassistant.core import HomeAssistant
 
 from custom_components.netgear_wax import NetgearDataUpdateCoordinator
 
-from .const import CHART_DONUT_ICON, DEVICES_ICON, DOMAIN, LAN_ICON, ROUTER_NETWORK_ICON, UPDATE_ICON
+from .const import (
+    CHART_DONUT_ICON,
+    DEVICES_ICON,
+    DOMAIN,
+    LAN_ICON,
+    ROUTER_NETWORK_ICON,
+    UPDATE_ICON,
+)
 from .entity import NetgearBaseEntity
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)

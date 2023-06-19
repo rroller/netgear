@@ -7,7 +7,15 @@ from homeassistant.helpers.aiohttp_client import async_create_clientsession
 import voluptuous as vol
 
 from .client_wax import NetgearWaxClient
-from .const import CONF_ADDRESS, CONF_MAC, CONF_PASSWORD, CONF_PORT, CONF_USERNAME, DOMAIN, PLATFORMS
+from .const import (
+    CONF_ADDRESS,
+    CONF_MAC,
+    CONF_PASSWORD,
+    CONF_PORT,
+    CONF_USERNAME,
+    DOMAIN,
+    PLATFORMS,
+)
 
 # https://developers.home-assistant.io/docs/data_entry_flow_index
 
