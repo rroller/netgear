@@ -17,8 +17,6 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
     coordinator: NetgearDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
     sensors: List[BinarySensorEntity] = []
 
-    # sensors.append(NetgearBinarySensor(coordinator, entry, "Example Sensor"))
-
     async_add_devices(sensors)
 
 
