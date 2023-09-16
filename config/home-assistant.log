@@ -1,0 +1,168 @@
+2023-09-16 20:23:18.673 WARNING (SyncWorker_0) [homeassistant.loader] We found a custom integration netgear_wax which has not been tested by Home Assistant. This component might cause stability problems, be sure to disable it if you experience issues with Home Assistant
+2023-09-16 20:23:20.323 INFO (MainThread) [homeassistant.setup] Setup of domain logger took 0.0 seconds
+2023-09-16 20:23:20.323 INFO (MainThread) [homeassistant.bootstrap] Setting up frontend: {'frontend'}
+2023-09-16 20:23:20.332 INFO (MainThread) [homeassistant.setup] Setting up device_automation
+2023-09-16 20:23:20.332 INFO (MainThread) [homeassistant.setup] Setup of domain device_automation took 0.0 seconds
+2023-09-16 20:23:20.356 INFO (SyncWorker_1) [homeassistant.util.package] Attempting install of aiohttp_cors==0.7.0
+2023-09-16 20:23:20.362 INFO (MainThread) [homeassistant.setup] Setting up lovelace
+2023-09-16 20:23:20.369 INFO (MainThread) [homeassistant.setup] Setup of domain lovelace took 0.0 seconds
+2023-09-16 20:23:21.016 INFO (MainThread) [homeassistant.setup] Setting up http
+2023-09-16 20:23:21.063 INFO (MainThread) [homeassistant.setup] Setup of domain http took 0.0 seconds
+2023-09-16 20:23:21.074 INFO (MainThread) [homeassistant.setup] Setting up api
+2023-09-16 20:23:21.076 INFO (MainThread) [homeassistant.setup] Setup of domain api took 0.0 seconds
+2023-09-16 20:23:21.076 INFO (MainThread) [homeassistant.setup] Setting up auth
+2023-09-16 20:23:21.077 INFO (MainThread) [homeassistant.setup] Setup of domain auth took 0.0 seconds
+2023-09-16 20:23:21.078 INFO (MainThread) [homeassistant.setup] Setting up config
+2023-09-16 20:23:21.082 INFO (SyncWorker_2) [homeassistant.util.package] Attempting install of janus==1.0.0
+2023-09-16 20:23:21.084 INFO (MainThread) [homeassistant.setup] Setting up diagnostics
+2023-09-16 20:23:21.091 INFO (MainThread) [homeassistant.setup] Setting up repairs
+2023-09-16 20:23:21.092 INFO (MainThread) [homeassistant.setup] Setup of domain repairs took 0.0 seconds
+2023-09-16 20:23:21.174 INFO (MainThread) [homeassistant.setup] Setup of domain config took 0.1 seconds
+2023-09-16 20:23:21.175 INFO (MainThread) [homeassistant.setup] Setup of domain diagnostics took 0.1 seconds
+2023-09-16 20:23:21.819 INFO (MainThread) [homeassistant.setup] Setting up file_upload
+2023-09-16 20:23:21.820 INFO (MainThread) [homeassistant.setup] Setup of domain file_upload took 0.0 seconds
+2023-09-16 20:23:21.832 INFO (SyncWorker_0) [homeassistant.util.package] Attempting install of pillow==9.4.0
+2023-09-16 20:23:23.039 INFO (MainThread) [homeassistant.setup] Setting up image_upload
+2023-09-16 20:23:23.046 INFO (MainThread) [homeassistant.setup] Setup of domain image_upload took 0.0 seconds
+2023-09-16 20:23:23.048 INFO (SyncWorker_2) [homeassistant.loader] Loaded device_tracker from homeassistant.components.device_tracker
+2023-09-16 20:23:23.050 INFO (MainThread) [homeassistant.setup] Setting up person
+2023-09-16 20:23:23.055 INFO (MainThread) [homeassistant.setup] Setup of domain person took 0.0 seconds
+2023-09-16 20:23:23.057 INFO (SyncWorker_1) [homeassistant.util.package] Attempting install of sqlalchemy==1.4.45
+2023-09-16 20:23:24.779 INFO (SyncWorker_1) [homeassistant.util.package] Attempting install of fnvhash==0.1.0
+2023-09-16 20:23:25.825 INFO (MainThread) [homeassistant.setup] Setting up websocket_api
+2023-09-16 20:23:25.826 INFO (MainThread) [homeassistant.setup] Setup of domain websocket_api took 0.0 seconds
+2023-09-16 20:23:25.828 INFO (SyncWorker_0) [homeassistant.loader] Loaded group from homeassistant.components.group
+2023-09-16 20:23:25.838 INFO (MainThread) [homeassistant.setup] Setting up search
+2023-09-16 20:23:25.838 INFO (MainThread) [homeassistant.setup] Setup of domain search took 0.0 seconds
+2023-09-16 20:23:26.088 INFO (MainThread) [homeassistant.setup] Setting up analytics
+2023-09-16 20:23:26.094 WARNING (MainThread) [asyncio] Executing <Task pending name='Task-100' coro=<_async_setup_component() running at /home/vscode/.local/lib/python3.10/site-packages/homeassistant/setup.py:256> wait_for=<Task pending name='Task-210' coro=<Store._async_load() running at /home/vscode/.local/lib/python3.10/site-packages/homeassistant/helpers/storage.py:119> cb=[Task.task_wakeup()] created at /home/vscode/.local/lib/python3.10/site-packages/homeassistant/core.py:518> cb=[Task.task_wakeup()] created at /home/vscode/.local/lib/python3.10/site-packages/homeassistant/core.py:518> took 0.256 seconds
+2023-09-16 20:23:26.098 INFO (MainThread) [homeassistant.setup] Setup of domain analytics took 0.0 seconds
+2023-09-16 20:23:26.100 INFO (SyncWorker_2) [homeassistant.loader] Loaded hassio from homeassistant.components.hassio
+2023-09-16 20:23:26.101 INFO (SyncWorker_1) [homeassistant.loader] Loaded panel_custom from homeassistant.components.panel_custom
+2023-09-16 20:23:26.116 INFO (SyncWorker_2) [homeassistant.util.package] Attempting install of home-assistant-frontend==20230201.0
+2023-09-16 20:23:32.072 INFO (MainThread) [homeassistant.setup] Setting up onboarding
+2023-09-16 20:23:32.077 INFO (MainThread) [homeassistant.setup] Setup of domain onboarding took 0.0 seconds
+2023-09-16 20:23:32.080 INFO (MainThread) [homeassistant.setup] Setting up frontend
+2023-09-16 20:23:32.088 INFO (MainThread) [homeassistant.setup] Setup of domain frontend took 0.0 seconds
+2023-09-16 20:23:32.090 INFO (MainThread) [homeassistant.bootstrap] Setting up recorder: {'recorder'}
+2023-09-16 20:23:32.091 INFO (MainThread) [homeassistant.setup] Setting up recorder
+2023-09-16 20:23:32.104 INFO (MainThread) [asyncio] <Server sockets=(<asyncio.TransportSocket fd=9, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('0.0.0.0', 8123)>, <asyncio.TransportSocket fd=10, family=AddressFamily.AF_INET6, type=SocketKind.SOCK_STREAM, proto=6, laddr=('::', 8123, 0, 0)>)> is serving
+2023-09-16 20:23:32.105 INFO (MainThread) [homeassistant.components.http] Now listening on port 8123
+2023-09-16 20:23:32.503 INFO (MainThread) [homeassistant.setup] Setup of domain recorder took 0.4 seconds
+2023-09-16 20:23:32.504 INFO (MainThread) [homeassistant.bootstrap] Setting up stage 1: {'bluetooth', 'websocket_api', 'dhcp', 'webhook', 'usb', 'api', 'http', 'zeroconf', 'cloud', 'network', 'ssdp'}
+2023-09-16 20:23:32.509 INFO (MainThread) [homeassistant.setup] Setting up webhook
+2023-09-16 20:23:32.510 INFO (MainThread) [homeassistant.setup] Setup of domain webhook took 0.0 seconds
+2023-09-16 20:23:32.531 INFO (SyncWorker_0) [homeassistant.util.package] Attempting install of scapy==2.5.0
+2023-09-16 20:23:34.497 INFO (SyncWorker_0) [homeassistant.util.package] Attempting install of aiodiscover==1.4.13
+2023-09-16 20:23:37.882 INFO (MainThread) [homeassistant.setup] Setting up dhcp
+2023-09-16 20:23:37.883 INFO (MainThread) [homeassistant.setup] Setup of domain dhcp took 0.0 seconds
+2023-09-16 20:23:37.921 INFO (SyncWorker_1) [homeassistant.util.package] Attempting install of pyudev==0.23.2
+2023-09-16 20:23:38.874 INFO (SyncWorker_1) [homeassistant.util.package] Attempting install of pyserial==3.5
+2023-09-16 20:23:39.813 INFO (MainThread) [homeassistant.setup] Setting up usb
+2023-09-16 20:23:39.813 INFO (MainThread) [homeassistant.setup] Setup of domain usb took 0.0 seconds
+2023-09-16 20:23:39.823 INFO (MainThread) [homeassistant.setup] Setting up network
+2023-09-16 20:23:39.824 INFO (MainThread) [homeassistant.setup] Setup of domain network took 0.0 seconds
+2023-09-16 20:23:39.850 INFO (SyncWorker_5) [homeassistant.util.package] Attempting install of hass-nabucasa==0.61.0
+2023-09-16 20:23:44.635 INFO (SyncWorker_4) [homeassistant.loader] Loaded google_assistant from homeassistant.components.google_assistant
+2023-09-16 20:23:44.637 INFO (SyncWorker_1) [homeassistant.loader] Loaded alexa from homeassistant.components.alexa
+2023-09-16 20:23:44.641 INFO (SyncWorker_5) [homeassistant.loader] Loaded camera from homeassistant.components.camera
+2023-09-16 20:23:44.668 INFO (SyncWorker_3) [homeassistant.util.package] Attempting install of bleak==0.19.5
+2023-09-16 20:23:48.812 INFO (SyncWorker_3) [homeassistant.util.package] Attempting install of bleak-retry-connector==2.13.0
+2023-09-16 20:23:50.495 INFO (SyncWorker_3) [homeassistant.util.package] Attempting install of bluetooth-auto-recovery==1.0.3
+2023-09-16 20:23:52.071 INFO (SyncWorker_3) [homeassistant.util.package] Attempting install of bluetooth-data-tools==0.3.1
+2023-09-16 20:23:52.997 INFO (MainThread) [homeassistant.setup] Setting up bluetooth
+2023-09-16 20:23:53.023 INFO (SyncWorker_5) [homeassistant.util.package] Attempting install of zeroconf==0.47.1
+2023-09-16 20:23:53.025 INFO (MainThread) [homeassistant.setup] Setup of domain bluetooth took 0.0 seconds
+2023-09-16 20:23:56.673 INFO (SyncWorker_2) [homeassistant.util.package] Attempting install of async-upnp-client==0.33.1
+2023-09-16 20:23:56.699 INFO (MainThread) [homeassistant.setup] Setting up zeroconf
+2023-09-16 20:23:56.702 INFO (MainThread) [homeassistant.setup] Setup of domain zeroconf took 0.0 seconds
+2023-09-16 20:23:56.747 INFO (MainThread) [homeassistant.components.zeroconf] Starting Zeroconf broadcast
+2023-09-16 20:23:58.370 INFO (MainThread) [homeassistant.setup] Setting up ssdp
+2023-09-16 20:23:58.381 INFO (MainThread) [asyncio] <Server sockets=(<asyncio.TransportSocket fd=25, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('172.17.0.2', 40000)>,)> is serving
+2023-09-16 20:23:58.384 INFO (MainThread) [homeassistant.setup] Setup of domain ssdp took 0.0 seconds
+2023-09-16 20:23:58.398 INFO (SyncWorker_0) [homeassistant.util.package] Attempting install of PyTurboJPEG==1.6.7
+2023-09-16 20:24:01.883 INFO (SyncWorker_1) [homeassistant.loader] Loaded media_player from homeassistant.components.media_player
+2023-09-16 20:24:02.056 INFO (MainThread) [homeassistant.setup] Setting up cloud
+2023-09-16 20:24:02.057 WARNING (MainThread) [asyncio] Executing <Task pending name='Task-286' coro=<_async_setup_component() running at /home/vscode/.local/lib/python3.10/site-packages/homeassistant/setup.py:256> wait_for=<Task pending name='Task-992' coro=<Store._async_load() running at /home/vscode/.local/lib/python3.10/site-packages/homeassistant/helpers/storage.py:119> cb=[Task.task_wakeup()] created at /home/vscode/.local/lib/python3.10/site-packages/homeassistant/core.py:518> cb=[Task.task_wakeup()] created at /home/vscode/.local/lib/python3.10/site-packages/homeassistant/core.py:518> took 0.173 seconds
+2023-09-16 20:24:02.078 INFO (MainThread) [homeassistant.setup] Setup of domain cloud took 0.0 seconds
+2023-09-16 20:24:02.079 INFO (MainThread) [homeassistant.bootstrap] Setting up stage 2: {'input_button', 'application_credentials', 'trace', 'schedule', 'default_config', 'repairs', 'homeassistant_alerts', 'energy', 'onboarding', 'system_health', 'logbook', 'diagnostics', 'blueprint', 'scene', 'hardware', 'tag', 'device_automation', 'person', 'input_number', 'image_upload', 'input_select', 'history', 'sun', 'input_boolean', 'mobile_app', 'my', 'script', 'search', 'auth', 'map', 'conversation', 'input_datetime', 'media_source', 'analytics', 'input_text', 'automation', 'zone', 'counter', 'file_upload', 'config', 'timer', 'lovelace'}
+2023-09-16 20:24:02.088 INFO (MainThread) [homeassistant.setup] Setting up input_button
+2023-09-16 20:24:02.089 INFO (MainThread) [homeassistant.setup] Setting up trace
+2023-09-16 20:24:02.090 INFO (MainThread) [homeassistant.setup] Setup of domain trace took 0.0 seconds
+2023-09-16 20:24:02.093 INFO (MainThread) [homeassistant.setup] Setting up schedule
+2023-09-16 20:24:02.099 INFO (MainThread) [homeassistant.setup] Setting up homeassistant_alerts
+2023-09-16 20:24:02.100 INFO (MainThread) [homeassistant.setup] Setup of domain homeassistant_alerts took 0.0 seconds
+2023-09-16 20:24:02.102 INFO (MainThread) [homeassistant.setup] Setting up blueprint
+2023-09-16 20:24:02.102 INFO (MainThread) [homeassistant.setup] Setup of domain blueprint took 0.0 seconds
+2023-09-16 20:24:02.102 INFO (MainThread) [homeassistant.setup] Setting up scene
+2023-09-16 20:24:02.103 INFO (MainThread) [homeassistant.components.scene] Setting up scene.homeassistant
+2023-09-16 20:24:02.107 INFO (MainThread) [homeassistant.setup] Setting up tag
+2023-09-16 20:24:02.109 INFO (MainThread) [homeassistant.setup] Setting up input_number
+2023-09-16 20:24:02.110 INFO (MainThread) [homeassistant.setup] Setting up input_select
+2023-09-16 20:24:02.173 INFO (SyncWorker_3) [homeassistant.util.package] Attempting install of psutil-home-assistant==0.0.1
+2023-09-16 20:24:02.203 INFO (MainThread) [homeassistant.setup] Setting up history
+2023-09-16 20:24:02.204 INFO (MainThread) [homeassistant.setup] Setup of domain history took 0.0 seconds
+2023-09-16 20:24:02.204 INFO (MainThread) [homeassistant.setup] Setting up sun
+2023-09-16 20:24:02.205 INFO (MainThread) [homeassistant.setup] Setup of domain sun took 0.0 seconds
+2023-09-16 20:24:02.205 INFO (MainThread) [homeassistant.setup] Setting up input_boolean
+2023-09-16 20:24:02.208 INFO (MainThread) [homeassistant.setup] Setting up input_datetime
+2023-09-16 20:24:02.210 INFO (MainThread) [homeassistant.setup] Setting up input_text
+2023-09-16 20:24:02.211 INFO (MainThread) [homeassistant.setup] Setting up zone
+2023-09-16 20:24:02.213 INFO (MainThread) [homeassistant.setup] Setting up counter
+2023-09-16 20:24:02.213 INFO (MainThread) [homeassistant.setup] Setting up timer
+2023-09-16 20:24:02.228 INFO (MainThread) [homeassistant.setup] Setting up application_credentials
+2023-09-16 20:24:02.230 INFO (MainThread) [homeassistant.setup] Setting up system_health
+2023-09-16 20:24:02.241 INFO (MainThread) [homeassistant.setup] Setting up logbook
+2023-09-16 20:24:02.247 INFO (MainThread) [homeassistant.setup] Setup of domain scene took 0.1 seconds
+2023-09-16 20:24:02.249 INFO (MainThread) [homeassistant.setup] Setting up my
+2023-09-16 20:24:02.249 INFO (MainThread) [homeassistant.setup] Setup of domain my took 0.0 seconds
+2023-09-16 20:24:02.250 INFO (MainThread) [homeassistant.setup] Setting up script
+2023-09-16 20:24:02.251 INFO (MainThread) [homeassistant.setup] Setting up map
+2023-09-16 20:24:02.252 INFO (MainThread) [homeassistant.setup] Setup of domain map took 0.0 seconds
+2023-09-16 20:24:02.254 INFO (MainThread) [homeassistant.setup] Setting up media_source
+2023-09-16 20:24:02.260 INFO (MainThread) [homeassistant.setup] Setting up automation
+2023-09-16 20:24:02.276 INFO (MainThread) [homeassistant.setup] Setting up energy
+2023-09-16 20:24:02.277 INFO (MainThread) [homeassistant.setup] Setup of domain energy took 0.0 seconds
+2023-09-16 20:24:02.298 INFO (MainThread) [homeassistant.setup] Setup of domain tag took 0.2 seconds
+2023-09-16 20:24:02.301 INFO (MainThread) [homeassistant.setup] Setup of domain system_health took 0.1 seconds
+2023-09-16 20:24:02.302 INFO (MainThread) [homeassistant.setup] Setup of domain logbook took 0.1 seconds
+2023-09-16 20:24:02.304 INFO (SyncWorker_1) [homeassistant.loader] Loaded sensor from homeassistant.components.sensor
+2023-09-16 20:24:02.309 INFO (MainThread) [homeassistant.setup] Setup of domain media_source took 0.1 seconds
+2023-09-16 20:24:02.324 INFO (MainThread) [homeassistant.setup] Setup of domain application_credentials took 0.1 seconds
+2023-09-16 20:24:02.327 INFO (MainThread) [homeassistant.setup] Setup of domain timer took 0.1 seconds
+2023-09-16 20:24:02.337 INFO (MainThread) [homeassistant.setup] Setup of domain counter took 0.1 seconds
+2023-09-16 20:24:02.350 INFO (MainThread) [homeassistant.setup] Setup of domain zone took 0.1 seconds
+2023-09-16 20:24:02.351 INFO (MainThread) [homeassistant.setup] Setup of domain input_button took 0.3 seconds
+2023-09-16 20:24:02.354 INFO (MainThread) [homeassistant.setup] Setting up sensor
+2023-09-16 20:24:02.355 INFO (MainThread) [homeassistant.setup] Setup of domain sensor took 0.0 seconds
+2023-09-16 20:24:02.359 INFO (MainThread) [homeassistant.setup] Setup of domain schedule took 0.3 seconds
+2023-09-16 20:24:02.361 INFO (MainThread) [homeassistant.setup] Setup of domain input_number took 0.3 seconds
+2023-09-16 20:24:02.371 INFO (MainThread) [homeassistant.setup] Setup of domain input_select took 0.3 seconds
+2023-09-16 20:24:02.374 INFO (MainThread) [homeassistant.setup] Setup of domain input_boolean took 0.2 seconds
+2023-09-16 20:24:02.376 INFO (MainThread) [homeassistant.setup] Setup of domain input_datetime took 0.2 seconds
+2023-09-16 20:24:02.377 INFO (MainThread) [homeassistant.setup] Setup of domain input_text took 0.2 seconds
+2023-09-16 20:24:02.378 INFO (MainThread) [homeassistant.components.sensor] Setting up sensor.energy
+2023-09-16 20:24:02.381 INFO (MainThread) [homeassistant.setup] Setup of domain script took 0.1 seconds
+2023-09-16 20:24:02.408 INFO (MainThread) [homeassistant.setup] Setup of domain automation took 0.1 seconds
+2023-09-16 20:24:05.753 INFO (MainThread) [homeassistant.setup] Setting up hardware
+2023-09-16 20:24:05.767 INFO (MainThread) [homeassistant.setup] Setup of domain hardware took 0.0 seconds
+2023-09-16 20:24:05.782 INFO (SyncWorker_5) [homeassistant.util.package] Attempting install of hassil==0.2.6
+2023-09-16 20:24:07.039 INFO (SyncWorker_5) [homeassistant.util.package] Attempting install of home-assistant-intents==2023.1.31
+2023-09-16 20:24:07.855 INFO (MainThread) [homeassistant.setup] Setting up conversation
+2023-09-16 20:24:07.855 INFO (MainThread) [homeassistant.setup] Setup of domain conversation took 0.0 seconds
+2023-09-16 20:24:07.870 INFO (SyncWorker_0) [homeassistant.util.package] Attempting install of PyNaCl==1.5.0
+2023-09-16 20:24:08.710 INFO (SyncWorker_3) [homeassistant.loader] Loaded notify from homeassistant.components.notify
+2023-09-16 20:24:08.716 INFO (MainThread) [homeassistant.setup] Setting up mobile_app
+2023-09-16 20:24:08.719 INFO (MainThread) [homeassistant.setup] Setup of domain mobile_app took 0.0 seconds
+2023-09-16 20:24:08.720 INFO (MainThread) [homeassistant.setup] Setting up notify
+2023-09-16 20:24:08.720 INFO (MainThread) [homeassistant.setup] Setup of domain notify took 0.0 seconds
+2023-09-16 20:24:08.730 INFO (MainThread) [homeassistant.components.notify] Setting up notify.mobile_app
+2023-09-16 20:24:08.733 INFO (MainThread) [homeassistant.setup] Setting up default_config
+2023-09-16 20:24:08.734 INFO (SyncWorker_4) [homeassistant.loader] Loaded backup from homeassistant.components.backup
+2023-09-16 20:24:08.750 INFO (SyncWorker_5) [homeassistant.util.package] Attempting install of securetar==2022.2.0
+2023-09-16 20:24:09.584 INFO (MainThread) [homeassistant.setup] Setting up backup
+2023-09-16 20:24:09.585 INFO (MainThread) [homeassistant.setup] Setup of domain backup took 0.0 seconds
+2023-09-16 20:24:09.587 INFO (MainThread) [homeassistant.setup] Setup of domain default_config took 0.9 seconds
+2023-09-16 20:24:09.591 INFO (MainThread) [homeassistant.bootstrap] Home Assistant initialized in 51.00s
+2023-09-16 20:24:09.592 INFO (MainThread) [homeassistant.core] Starting Home Assistant
+2023-09-16 20:26:26.302 INFO (Recorder) [homeassistant.components.recorder.pool.RecorderPool] Pool recreating
