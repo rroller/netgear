@@ -51,9 +51,18 @@ class NetgearWaxClient(NetgearClient):
         response.raise_for_status()
         _LOGGER.debug("login security token response=%s", await response.text())
 
+        # Older firmwares use a response header
         security_token = response.headers.get("security")
+
+        # Newer firmewares return a security token in the response
+        text = ""
         if security_token is None:
             text = await response.text()
+            result = json.loads(text)
+            if "system" in result and "security_token" in result["system"]:
+                security_token = result["system"]["security_token"]
+
+        if security_token is None:
             raise Exception("Could not get security token: " + text)
 
         # TODO: is python thread safe? I have no idea. If not, we should guard when settings these two values
