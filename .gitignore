@@ -4,3 +4,7 @@ venv
 .venv
 .coverage
 .idea/
+
+# Home Assistant configuration
+config/*
+!config/configuration.yaml
