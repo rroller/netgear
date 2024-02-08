@@ -116,7 +116,7 @@ class NetgearWaxClient(NetgearClient):
 
         if "stats" in monitor:
             stats = monitor["stats"]
-            for lan in ["lan", "wlan0", "wlan1"]:
+            for lan in ["lan", "wlan0", "wlan1", "wlan2"]:
                 if lan in stats:
                     state.stats[lan] = Stat(
                         safe_cast(stats[lan]["channelUtil"], int, 0) if "channelUtil" in stats[lan] else 0,

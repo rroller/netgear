@@ -60,6 +60,10 @@ STATE_REQUEST_DATA = {
                 "wlan1": {
                     "traffic": "",
                     "channelUtil": "",
+                },
+                "wlan2": {
+                    "traffic": "",
+                    "channelUtil": "",
                 }
             },
         },

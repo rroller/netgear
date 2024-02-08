@@ -26,10 +26,10 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
 
     stats = coordinator.get_stats()
     if stats is not None:
-        for lan in ["wlan0", "wlan1"]:
+        for lan in ["wlan0", "wlan1", "wlan2"]:
             if lan in stats:
                 sensors.append(NetgearWlanUtilizationSensor(coordinator, entry, f"{lan} util", lan))
-        for lan in ["lan", "wlan0", "wlan1"]:
+        for lan in ["lan", "wlan0", "wlan1", "wlan2"]:
             if lan in stats:
                 sensors.append(NetgearInterfaceTrafficSensor(coordinator, entry, f"{lan} traffic", lan))
 
