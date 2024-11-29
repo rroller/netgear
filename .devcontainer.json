@@ -1,6 +1,6 @@
 {
-    "name": "rroller/netgear",
-    "image": "mcr.microsoft.com/vscode/devcontainers/python:0-3.10-bullseye",
+    "name": "ludeeus/integration_blueprint",
+    "image": "mcr.microsoft.com/devcontainers/python:3.12-bullseye",
     "postCreateCommand": "scripts/setup",
     "forwardPorts": [
         8123
@@ -31,9 +31,15 @@
                 "editor.formatOnPaste": false,
                 "editor.formatOnSave": true,
                 "editor.formatOnType": true,
-                "files.trimTrailingWhitespace": true
+                "files.trimTrailingWhitespace": true,
+                "terminal.integrated.shell.linux": "bash"
             }
         }
+    },
+    "containerUser": "vscode",
+    "updateRemoteUserUID": true,
+    "containerEnv": {
+        "HOME": "/home/vscode"
     },
     "remoteUser": "vscode",
     "features": {
