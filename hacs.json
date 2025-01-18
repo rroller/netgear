@@ -1,7 +1,7 @@
 {
     "name": "Netgear WAX",
     "hacs": "1.6.0",
-    "homeassistant": "2024.1.0",
+    "homeassistant": "2025.1.2",
     "domains": [
         "binary_sensor",
         "sensor",
@@ -11,5 +11,7 @@
     "render_readme": true,
     "documentation": "https://github.com/rroller/netgear/blob/main/README.md",
     "issue_tracker": "https://github.com/rroller/netgear/issues",
-    "codeowners": ["@rroller"]
+    "codeowners": [
+        "@rroller"
+    ]
 }
