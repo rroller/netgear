@@ -5,7 +5,7 @@
   "documentation": "https://github.com/rroller/netgear",
   "issue_tracker": "https://github.com/rroller/netgear/issues",
   "dependencies": [],
-  "version": "0.5.0",
+  "version": "0.1.9",
   "config_flow": true,
   "codeowners": [
     "@rroller"
