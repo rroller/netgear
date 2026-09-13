@@ -10,10 +10,10 @@ from datetime import timedelta
 
 from homeassistant.core_config import Config
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.components.logbook import async_log_entry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP
 
@@ -26,6 +26,7 @@ from .const import (
     CONF_USERNAME,
     CONF_ADDRESS,
     DOMAIN,
+    EVENT_CLIENT_ACTIVITY,
     PLATFORMS,
     STARTUP_MESSAGE, CONF_MAC,
 )
@@ -93,7 +94,7 @@ class NetgearDataUpdateCoordinator(DataUpdateCoordinator):
         self._state: DeviceState
         self._ssids: List[Ssid]
         self._wireless_clients: List[WirelessClient] = []
-        self._connected_clients_entity_id: str | None = None
+        self._device_id: str | None = None
         self._firmware_last_checked: int = 0
         self._address = address
 
@@ -155,31 +156,35 @@ class NetgearDataUpdateCoordinator(DataUpdateCoordinator):
             if client.mac_address
         }
 
-        entity_id = self._connected_clients_entity_id
-        if entity_id is None:
+        if self._device_id is None:
             return
 
         for mac_address in current_by_mac.keys() - previous_by_mac.keys():
-            self._async_log_client_event(current_by_mac[mac_address], "connected", entity_id)
+            self._async_log_client_event(current_by_mac[mac_address], "connected")
         for mac_address in previous_by_mac.keys() - current_by_mac.keys():
-            self._async_log_client_event(previous_by_mac[mac_address], "disconnected", entity_id)
+            self._async_log_client_event(previous_by_mac[mac_address], "disconnected")
 
-    def register_connected_clients_entity(self, entity_id: str) -> None:
-        """Associate client activity with the Connected Clients device entity."""
-        self._connected_clients_entity_id = entity_id
+    def register_device_activity(self) -> None:
+        """Associate client activity with this access point's device."""
+        device = dr.async_get(self.hass).async_get_device(
+            identifiers={(DOMAIN, self.get_mac())}
+        )
+        if device is None:
+            _LOGGER.warning("Unable to find device for connected-client activity")
+            return
+        self._device_id = device.id
 
         # The first coordinator refresh runs before entities are created. Record
-        # the clients it found now that there is an entity to attach to the AP.
+        # the clients it found now that there is a device to attach to the AP.
         for client in self._wireless_clients:
             if client.mac_address:
-                self._async_log_client_event(
-                    client, "was detected as connected", entity_id
-                )
+                self._async_log_client_event(client, "was detected as connected")
 
-    def _async_log_client_event(
-        self, client: WirelessClient, activity: str, entity_id: str
-    ) -> None:
-        """Write a client event associated with the connected-clients sensor."""
+    def _async_log_client_event(self, client: WirelessClient, activity: str) -> None:
+        """Write a client event associated with this access point."""
+        if self._device_id is None:
+            return
+
         label = client.hostname or client.username or client.mac_address
         if label != client.mac_address:
             label = f"{label} ({client.mac_address})"
@@ -190,12 +195,13 @@ class NetgearDataUpdateCoordinator(DataUpdateCoordinator):
         if client.radio:
             network += f" ({client.radio})"
 
-        async_log_entry(
-            self.hass,
-            self.get_device_name(),
-            f"{label} {activity}{network}",
-            DOMAIN,
-            entity_id,
+        self.hass.bus.async_fire(
+            EVENT_CLIENT_ACTIVITY,
+            {
+                "device_id": self._device_id,
+                "name": self.get_device_name(),
+                "message": f"{label} {activity}{network}",
+            },
         )
 
     def on_receive(self, data_bytes: bytes):

@@ -92,7 +92,7 @@ class NetgearTotalDevicesSensor(NetgearSensor):
     async def async_added_to_hass(self) -> None:
         """Attach initial client activity to this device's sensor entity."""
         await super().async_added_to_hass()
-        self._coordinator.register_connected_clients_entity(self.entity_id)
+        self._coordinator.register_device_activity()
 
     @property
     def state(self):
