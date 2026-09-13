@@ -57,7 +57,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     port = int(entry.data.get(CONF_PORT))
     mac = entry.data.get(CONF_MAC)
 
-    coordinator = NetgearDataUpdateCoordinator(hass, address, port, username, password, mac)
+    coordinator = NetgearDataUpdateCoordinator(
+        hass, address, port, username, password, mac, entry.entry_id
+    )
     await coordinator.async_config_entry_first_refresh()
 
     if not coordinator.last_update_success:
@@ -83,7 +85,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 class NetgearDataUpdateCoordinator(DataUpdateCoordinator):
     """Class to manage fetching data from the Netgear API."""
 
-    def __init__(self, hass: HomeAssistant, address: str, port: int, username: str, password: str, mac: str) -> None:
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        address: str,
+        port: int,
+        username: str,
+        password: str,
+        mac: str,
+        entry_id: str,
+    ) -> None:
         """Initialize"""
         # TODO: Support multiple clients here
         self.client: NetgearClient = NetgearWaxClient(username, password, address, port,
@@ -91,6 +102,7 @@ class NetgearDataUpdateCoordinator(DataUpdateCoordinator):
         self.platforms = []
         self._initialized = False
         self._mac = mac
+        self._entry_id = entry_id
         self._state: DeviceState
         self._ssids: List[Ssid]
         self._wireless_clients: List[WirelessClient] = []
@@ -166,9 +178,17 @@ class NetgearDataUpdateCoordinator(DataUpdateCoordinator):
 
     def register_device_activity(self) -> None:
         """Associate client activity with this access point's device."""
-        device = dr.async_get(self.hass).async_get_device(
-            identifiers={(DOMAIN, self.get_mac())}
-        )
+        device_registry = dr.async_get(self.hass)
+        if hasattr(device_registry, "async_get_device_by_identifier"):
+            device = device_registry.async_get_device_by_identifier(
+                (DOMAIN, self.get_mac()), self._entry_id
+            )
+        else:
+            # Support Home Assistant versions before device identifiers became
+            # scoped to a config entry.
+            device = device_registry.async_get_device(
+                identifiers={(DOMAIN, self.get_mac())}
+            )
         if device is None:
             _LOGGER.warning("Unable to find device for connected-client activity")
             return
