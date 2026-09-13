@@ -16,7 +16,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP
 
-from .client import Stat, NetgearClient
+from .client import NetgearClient, Stat, WirelessClient
 from .client_wax import NetgearWaxClient, DeviceState, Ssid
 
 from .const import (
@@ -91,6 +91,7 @@ class NetgearDataUpdateCoordinator(DataUpdateCoordinator):
         self._mac = mac
         self._state: DeviceState
         self._ssids: List[Ssid]
+        self._wireless_clients: List[WirelessClient] = []
         self._firmware_last_checked: int = 0
         self._address = address
 
@@ -119,6 +120,10 @@ class NetgearDataUpdateCoordinator(DataUpdateCoordinator):
         try:
             self._state = await self.client.async_get_state(check_firmware)
             self._ssids = await self.client.async_get_ssids()
+            radios = ["wlan0", "wlan1"]
+            if "wlan2" in self._state.stats:
+                radios.append("wlan2")
+            self._wireless_clients = await self.client.async_get_wireless_clients(radios)
             self._initialized = True
         except Exception as exception:
             _LOGGER.debug("Failed to read current state", exc_info=exception)
@@ -157,6 +162,10 @@ class NetgearDataUpdateCoordinator(DataUpdateCoordinator):
             if ssid_id == ssid.ssid_id:
                 ssids.append(ssid)
         return ssids
+
+    def get_wireless_clients(self) -> List[WirelessClient]:
+        """Return the wireless clients associated with this access point."""
+        return self._wireless_clients
 
     def is_firmware_update_available(self) -> bool:
         return self._state.firmware_update_available

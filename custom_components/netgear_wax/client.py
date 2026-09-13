@@ -20,6 +20,21 @@ class Stat:
     bytes_transferred: int
 
 
+@dataclass(frozen=True)
+class WirelessClient:
+    """A wireless client associated with an access point."""
+
+    mac_address: str
+    ip_address: str
+    hostname: str
+    ssid: str
+    radio: str
+    operating_system: str
+    mode: str
+    vlan_id: str = ""
+    username: str = ""
+
+
 @dataclass(unsafe_hash=True)
 class DeviceState:
     ssid: str = ""
@@ -54,6 +69,11 @@ class NetgearClient(abc.ABC):
 
     @abc.abstractmethod
     async def async_get_ssids(self) -> List[Ssid]:
+        pass
+
+    @abc.abstractmethod
+    async def async_get_wireless_clients(self, radios: List[str]) -> List[WirelessClient]:
+        """Return the clients associated with the supplied wireless radios."""
         pass
 
     @abc.abstractmethod

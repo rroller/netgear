@@ -94,6 +94,30 @@ class NetgearTotalDevicesSensor(NetgearSensor):
         return self._coordinator.total_number_of_devices()
 
     @property
+    def extra_state_attributes(self):
+        """Expose the connected-client list for this access point.
+
+        Each integration entry represents one AP, so this attribute directly
+        answers which AP a client is currently associated with.
+        """
+        return {
+            "connected_clients": [
+                {
+                    "mac_address": client.mac_address,
+                    "ip_address": client.ip_address,
+                    "hostname": client.hostname,
+                    "ssid": client.ssid,
+                    "radio": client.radio,
+                    "operating_system": client.operating_system,
+                    "mode": client.mode,
+                    "vlan_id": client.vlan_id,
+                    "username": client.username,
+                }
+                for client in self._coordinator.get_wireless_clients()
+            ]
+        }
+
+    @property
     def icon(self) -> str:
         return DEVICES_ICON
 

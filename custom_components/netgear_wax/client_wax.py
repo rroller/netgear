@@ -8,7 +8,13 @@ from aiohttp import hdrs
 from aiohttp.client_reqrep import ClientResponse
 from typing import List, Optional
 
-from custom_components.netgear_wax.client import NetgearClient, DeviceState, Ssid, Stat
+from custom_components.netgear_wax.client import (
+    DeviceState,
+    NetgearClient,
+    Ssid,
+    Stat,
+    WirelessClient,
+)
 from custom_components.netgear_wax.const import STATE_REQUEST_DATA
 from custom_components.netgear_wax.utils import parse_human_string, safe_cast
 
@@ -141,6 +147,50 @@ class NetgearWaxClient(NetgearClient):
                     ssids.extend(self.load_wlan(ssid_index, wlan_id, ssid_value[wlan_id]))
 
         return ssids
+
+    async def async_get_wireless_clients(self, radios: List[str]) -> List[WirelessClient]:
+        """Return clients currently associated with each supplied wireless radio.
+
+        ``optCliList`` is the endpoint used by the access point's Connected
+        Clients page.  The numeric key is part of the device API, not a client
+        MAC address or a pagination value.
+        """
+        clients = []
+        for radio in radios:
+            data = json.dumps(
+                {"system": {"monitor": {"optCliList": {radio: {3146087: ""}}}}}
+            )
+            result = await self.async_post(data)
+            client_list = (
+                result.get("system", {})
+                .get("monitor", {})
+                .get("optCliList", {})
+                .get(radio, {})
+                .get("3146087", [])
+            )
+
+            if not isinstance(client_list, list):
+                _LOGGER.warning("Unexpected connected client response for %s", radio)
+                continue
+
+            for client in client_list:
+                if not isinstance(client, dict):
+                    continue
+                clients.append(
+                    WirelessClient(
+                        mac_address=str(client.get("mac", "")),
+                        ip_address=str(client.get("ip", "")),
+                        hostname=str(client.get("hname", "")),
+                        ssid=str(client.get("ssid", "")),
+                        radio=radio,
+                        operating_system=str(client.get("dOs", "")),
+                        mode=str(client.get("mode", "")),
+                        vlan_id=str(client.get("vlanID", "")),
+                        username=str(client.get("Username", "")),
+                    )
+                )
+
+        return clients
 
     async def async_enable_ssid(self, ssids: List[Ssid], enable: bool):
         """ async_enable_ssid will turn an ssid on or off. All supplied ssids but be the same ssid, but there
