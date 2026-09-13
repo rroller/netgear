@@ -3,14 +3,22 @@
 from typing import Any
 
 from homeassistant.components.logbook import LOGBOOK_ENTRY_MESSAGE, LOGBOOK_ENTRY_NAME
-from homeassistant.core import callback
+from homeassistant.core import HomeAssistant, callback
 
-from .const import DOMAIN, EVENT_CLIENT_ACTIVITY
+from .const import (
+    DATA_LOGBOOK_READY,
+    DOMAIN,
+    EVENT_CLIENT_ACTIVITY,
+    EVENT_LOGBOOK_READY,
+)
 
 
-async def async_describe_events(_hass: Any, async_describe_event: Any) -> None:
+@callback
+def async_describe_events(hass: HomeAssistant, async_describe_event: Any) -> None:
     """Describe Netgear client activity for Home Assistant's logbook."""
     async_describe_event(DOMAIN, EVENT_CLIENT_ACTIVITY, _describe_client_activity)
+    hass.data.setdefault(DOMAIN, {})[DATA_LOGBOOK_READY] = True
+    hass.bus.async_fire(EVENT_LOGBOOK_READY)
 
 
 @callback

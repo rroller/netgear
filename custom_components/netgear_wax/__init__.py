@@ -10,7 +10,7 @@ from datetime import timedelta
 
 from homeassistant.core_config import Config
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers import device_registry as dr
@@ -26,7 +26,9 @@ from .const import (
     CONF_USERNAME,
     CONF_ADDRESS,
     DOMAIN,
+    DATA_LOGBOOK_READY,
     EVENT_CLIENT_ACTIVITY,
+    EVENT_LOGBOOK_READY,
     PLATFORMS,
     STARTUP_MESSAGE, CONF_MAC,
 )
@@ -107,6 +109,10 @@ class NetgearDataUpdateCoordinator(DataUpdateCoordinator):
         self._ssids: List[Ssid]
         self._wireless_clients: List[WirelessClient] = []
         self._device_id: str | None = None
+        self._initial_client_activity_logged = False
+        self._unsub_logbook_ready = hass.bus.async_listen(
+            EVENT_LOGBOOK_READY, self._async_handle_logbook_ready
+        )
         self._firmware_last_checked: int = 0
         self._address = address
 
@@ -114,6 +120,7 @@ class NetgearDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def async_stop(self, event: Any):
         """ Stop anything we need to stop """
+        self._unsub_logbook_ready()
         # Log out is important, the device limits concurrent logins
         await self.client.async_logout()
 
@@ -194,8 +201,22 @@ class NetgearDataUpdateCoordinator(DataUpdateCoordinator):
             return
         self._device_id = device.id
 
+        if self.hass.data[DOMAIN].get(DATA_LOGBOOK_READY):
+            self._async_log_initial_client_activity()
+
+    @callback
+    def _async_handle_logbook_ready(self, event: Any) -> None:
+        """Log current clients once the custom logbook event is registered."""
+        self._async_log_initial_client_activity()
+
+    def _async_log_initial_client_activity(self) -> None:
+        """Record the clients found during the first coordinator refresh."""
+        if self._initial_client_activity_logged or self._device_id is None:
+            return
+        self._initial_client_activity_logged = True
+
         # The first coordinator refresh runs before entities are created. Record
-        # the clients it found now that there is a device to attach to the AP.
+        # the clients it found now that the logbook event is ready to render.
         for client in self._wireless_clients:
             if client.mac_address:
                 self._async_log_client_event(client, "was detected as connected")

@@ -3,6 +3,8 @@
 NAME = "Netgear WAX"
 DOMAIN = "netgear_wax"
 EVENT_CLIENT_ACTIVITY = f"{DOMAIN}_client_activity"
+EVENT_LOGBOOK_READY = f"{DOMAIN}_logbook_ready"
+DATA_LOGBOOK_READY = "logbook_ready"
 ATTRIBUTION = "Data provided by local device"
 ISSUE_URL = "https://github.com/rroller/netgear/issues"
 
