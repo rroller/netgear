@@ -10,9 +10,11 @@ from datetime import timedelta
 
 from homeassistant.core_config import Config
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.components.logbook import async_log_entry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP
 
@@ -123,13 +125,68 @@ class NetgearDataUpdateCoordinator(DataUpdateCoordinator):
             radios = ["wlan0", "wlan1"]
             if "wlan2" in self._state.stats:
                 radios.append("wlan2")
-            self._wireless_clients = await self.client.async_get_wireless_clients(radios)
+            wireless_clients = await self.client.async_get_wireless_clients(radios)
+            if self._initialized:
+                self._async_log_client_activity(
+                    self._wireless_clients, wireless_clients
+                )
+            self._wireless_clients = wireless_clients
             self._initialized = True
         except Exception as exception:
             _LOGGER.debug("Failed to read current state", exc_info=exception)
             raise UpdateFailed() from exception
 
         return self._state
+
+    def _async_log_client_activity(
+        self,
+        previous_clients: List[WirelessClient],
+        current_clients: List[WirelessClient],
+    ) -> None:
+        """Add client connect and disconnect events to this AP's activity feed."""
+        previous_by_mac = {
+            client.mac_address.lower(): client
+            for client in previous_clients
+            if client.mac_address
+        }
+        current_by_mac = {
+            client.mac_address.lower(): client
+            for client in current_clients
+            if client.mac_address
+        }
+
+        entity_id = er.async_get(self.hass).async_get_entity_id(
+            "sensor", DOMAIN, f"{self.get_mac()}_Connected Clients"
+        )
+        if entity_id is None:
+            return
+
+        for mac_address in current_by_mac.keys() - previous_by_mac.keys():
+            self._async_log_client_event(current_by_mac[mac_address], "connected", entity_id)
+        for mac_address in previous_by_mac.keys() - current_by_mac.keys():
+            self._async_log_client_event(previous_by_mac[mac_address], "disconnected", entity_id)
+
+    def _async_log_client_event(
+        self, client: WirelessClient, activity: str, entity_id: str
+    ) -> None:
+        """Write a client event associated with the connected-clients sensor."""
+        label = client.hostname or client.username or client.mac_address
+        if label != client.mac_address:
+            label = f"{label} ({client.mac_address})"
+
+        network = ""
+        if client.ssid:
+            network = f" on {client.ssid}"
+        if client.radio:
+            network += f" ({client.radio})"
+
+        async_log_entry(
+            self.hass,
+            self.get_device_name(),
+            f"{label} {activity}{network}",
+            DOMAIN,
+            entity_id,
+        )
 
     def on_receive(self, data_bytes: bytes):
         data = data_bytes.decode("utf-8", errors="ignore")
