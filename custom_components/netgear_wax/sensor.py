@@ -89,6 +89,11 @@ class NetgearTotalDevicesSensor(NetgearSensor):
         NetgearSensor.__init__(self, coordinator, config_entry, sensor_type)
         self._coordinator = coordinator
 
+    async def async_added_to_hass(self) -> None:
+        """Attach initial client activity to this device's sensor entity."""
+        await super().async_added_to_hass()
+        self._coordinator.register_connected_clients_entity(self.entity_id)
+
     @property
     def state(self):
         return self._coordinator.total_number_of_devices()

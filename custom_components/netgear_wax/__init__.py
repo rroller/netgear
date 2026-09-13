@@ -14,7 +14,6 @@ from homeassistant.components.logbook import async_log_entry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP
 
@@ -94,6 +93,7 @@ class NetgearDataUpdateCoordinator(DataUpdateCoordinator):
         self._state: DeviceState
         self._ssids: List[Ssid]
         self._wireless_clients: List[WirelessClient] = []
+        self._connected_clients_entity_id: str | None = None
         self._firmware_last_checked: int = 0
         self._address = address
 
@@ -155,9 +155,7 @@ class NetgearDataUpdateCoordinator(DataUpdateCoordinator):
             if client.mac_address
         }
 
-        entity_id = er.async_get(self.hass).async_get_entity_id(
-            "sensor", DOMAIN, f"{self.get_mac()}_Connected Clients"
-        )
+        entity_id = self._connected_clients_entity_id
         if entity_id is None:
             return
 
@@ -165,6 +163,18 @@ class NetgearDataUpdateCoordinator(DataUpdateCoordinator):
             self._async_log_client_event(current_by_mac[mac_address], "connected", entity_id)
         for mac_address in previous_by_mac.keys() - current_by_mac.keys():
             self._async_log_client_event(previous_by_mac[mac_address], "disconnected", entity_id)
+
+    def register_connected_clients_entity(self, entity_id: str) -> None:
+        """Associate client activity with the Connected Clients device entity."""
+        self._connected_clients_entity_id = entity_id
+
+        # The first coordinator refresh runs before entities are created. Record
+        # the clients it found now that there is an entity to attach to the AP.
+        for client in self._wireless_clients:
+            if client.mac_address:
+                self._async_log_client_event(
+                    client, "was detected as connected", entity_id
+                )
 
     def _async_log_client_event(
         self, client: WirelessClient, activity: str, entity_id: str
