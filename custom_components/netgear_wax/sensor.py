@@ -2,7 +2,7 @@
 import logging
 from typing import List
 
-from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
+from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorStateClass
 from homeassistant.core import HomeAssistant
 from custom_components.netgear_wax import NetgearDataUpdateCoordinator
 
@@ -128,16 +128,18 @@ class NetgearTotalDevicesSensor(NetgearSensor):
 
 
 class NetgearWlanUtilizationSensor(NetgearSensor):
-    """ Sensor to report how many devices are connected """
+    """Report WLAN utilization as a continuous percentage measurement."""
+
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_native_unit_of_measurement = "%"
 
     def __init__(self, coordinator: NetgearDataUpdateCoordinator, config_entry, sensor_type: str, lan: str):
         NetgearSensor.__init__(self, coordinator, config_entry, sensor_type)
         self._coordinator = coordinator
         self._lan = lan
-        self._attr_unit_of_measurement = "%"
 
     @property
-    def state(self):
+    def native_value(self):
         stats = self._coordinator.get_stats()
         if self._lan in stats:
             return self._coordinator.get_stats().get(self._lan).utilization
