@@ -6,7 +6,7 @@
   "issue_tracker": "https://github.com/rroller/netgear/issues",
   "dependencies": [],
   "after_dependencies": ["logbook"],
-  "version": "0.1.14",
+  "version": "0.1.15",
   "config_flow": true,
   "codeowners": [
     "@rroller"

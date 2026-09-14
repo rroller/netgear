@@ -7,7 +7,7 @@ from homeassistant.core import HomeAssistant
 
 from . import NetgearDataUpdateCoordinator
 from .const import (
-    DOMAIN, SAFETY_DEVICE_CLASS,
+    DOMAIN,
 )
 from .entity import NetgearBaseEntity
 
@@ -31,7 +31,7 @@ class NetgearBinarySensor(NetgearBaseEntity, BinarySensorEntity):
         NetgearBaseEntity.__init__(self, coordinator, config_entry)
         BinarySensorEntity.__init__(self)
         self._coordinator = coordinator
-        self._device_class = SAFETY_DEVICE_CLASS
+        self._device_class = None
         self._name = f"{coordinator.get_device_name()} {sensor_type}"
         self._unique_id = f"{coordinator.get_mac()}_{sensor_type}"
 

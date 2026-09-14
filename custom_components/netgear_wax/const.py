@@ -18,7 +18,6 @@ LAN_ICON = "mdi:lan"
 
 # Device classes - https://www.home-assistant.io/integrations/binary_sensor/#device-class
 CONNECTIVITY_DEVICE_CLASS = "connectivity"
-SAFETY_DEVICE_CLASS = "safety"
 
 # Platforms
 BINARY_SENSOR = "binary_sensor"

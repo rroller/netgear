@@ -2,12 +2,12 @@
 import logging
 from typing import List
 
-from homeassistant.components.sensor import SensorEntity
+from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
 from homeassistant.core import HomeAssistant
 from custom_components.netgear_wax import NetgearDataUpdateCoordinator
 
 from .const import (
-    DOMAIN, SAFETY_DEVICE_CLASS, DEVICES_ICON, UPDATE_ICON, CHART_DONUT_ICON, ROUTER_NETWORK_ICON, LAN_ICON,
+    DOMAIN, DEVICES_ICON, UPDATE_ICON, CHART_DONUT_ICON, ROUTER_NETWORK_ICON, LAN_ICON,
 )
 from .entity import NetgearBaseEntity
 
@@ -43,7 +43,7 @@ class NetgearSensor(NetgearBaseEntity, SensorEntity):
         NetgearBaseEntity.__init__(self, coordinator, config_entry)
         SensorEntity.__init__(self)
         self._coordinator = coordinator
-        self._device_class = SAFETY_DEVICE_CLASS
+        self._device_class = None
         self._name = f"{coordinator.get_device_name()} {sensor_type}"
         self._unique_id = f"{coordinator.get_mac()}_{sensor_type}"
 
@@ -155,6 +155,7 @@ class NetgearInterfaceTrafficSensor(NetgearSensor):
         NetgearSensor.__init__(self, coordinator, config_entry, sensor_type)
         self._coordinator = coordinator
         self._lan = lan
+        self._device_class = SensorDeviceClass.DATA_SIZE
         self._attr_unit_of_measurement = "B"
 
     @property
