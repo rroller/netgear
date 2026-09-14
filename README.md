@@ -85,6 +85,13 @@ MAC Sensor | Shows the device MAC
 
 # Local development
 
+Client Activity entries use the access point's reported hostname when available.
+If it is missing or is just the client's MAC address, the integration looks for
+a Home Assistant device registered with that MAC and uses its name (preferring
+a user-assigned name). Without a matching name, it falls back to a meaningful
+username or the MAC address. This affects new Activity entries; existing entries
+are not renamed.
+
 If you wish to work on this component, the easiest way is to
 follow [HACS Dev Container README](https://github.com/custom-components/integration_blueprint/blob/master/.devcontainer/README.md)
 . In short:

@@ -18,6 +18,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP
 
 from .client import NetgearClient, Stat, WirelessClient
+from .client_names import normalize_mac, useful_name
 from .client_wax import NetgearWaxClient, DeviceState, Ssid
 
 from .const import (
@@ -226,7 +227,7 @@ class NetgearDataUpdateCoordinator(DataUpdateCoordinator):
         if self._device_id is None:
             return
 
-        label = client.hostname or client.username or client.mac_address
+        label = self._client_activity_name(client)
         if label != client.mac_address:
             label = f"{label} ({client.mac_address})"
 
@@ -244,6 +245,28 @@ class NetgearDataUpdateCoordinator(DataUpdateCoordinator):
                 "message": f"{label} {activity}{network}",
             },
         )
+
+    def _client_activity_name(self, client: WirelessClient) -> str:
+        """Prefer the AP hostname, then a locally registered device name."""
+        if hostname := useful_name(client.hostname, client.mac_address):
+            return hostname
+
+        registry = dr.async_get(self.hass)
+        connections = {(dr.CONNECTION_NETWORK_MAC, normalize_mac(client.mac_address))}
+        if hasattr(registry, "async_get_devices"):
+            devices = registry.async_get_devices(connections=connections)
+        else:
+            # Compatibility with Home Assistant before the multi-device API.
+            device = registry.async_get_device(connections=connections)
+            devices = [device] if device else []
+
+        # User-assigned names take precedence across matching integrations.
+        for attribute in ("name_by_user", "name"):
+            for device in sorted(devices, key=lambda item: item.id):
+                if name := useful_name(getattr(device, attribute), client.mac_address):
+                    return name
+
+        return useful_name(client.username, client.mac_address) or client.mac_address
 
     def on_receive(self, data_bytes: bytes):
         data = data_bytes.decode("utf-8", errors="ignore")
