@@ -151,17 +151,18 @@ class NetgearWlanUtilizationSensor(NetgearSensor):
 
 
 class NetgearInterfaceTrafficSensor(NetgearSensor):
-    """ Sensor to report how many devices are connected """
+    """Report transferred data using native byte units."""
+
+    _attr_native_unit_of_measurement = "B"
 
     def __init__(self, coordinator: NetgearDataUpdateCoordinator, config_entry, sensor_type: str, lan: str):
         NetgearSensor.__init__(self, coordinator, config_entry, sensor_type)
         self._coordinator = coordinator
         self._lan = lan
         self._device_class = SensorDeviceClass.DATA_SIZE
-        self._attr_unit_of_measurement = "B"
 
     @property
-    def state(self):
+    def native_value(self):
         stats = self._coordinator.get_stats()
         if self._lan in stats:
             return self._coordinator.get_stats().get(self._lan).bytes_transferred
