@@ -151,8 +151,9 @@ class NetgearWlanUtilizationSensor(NetgearSensor):
 
 
 class NetgearInterfaceTrafficSensor(NetgearSensor):
-    """Report transferred data using native byte units."""
+    """Report cumulative traffic without flooding Activity with counter updates."""
 
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
     _attr_native_unit_of_measurement = "B"
 
     def __init__(self, coordinator: NetgearDataUpdateCoordinator, config_entry, sensor_type: str, lan: str):
@@ -166,7 +167,8 @@ class NetgearInterfaceTrafficSensor(NetgearSensor):
         stats = self._coordinator.get_stats()
         if self._lan in stats:
             return self._coordinator.get_stats().get(self._lan).bytes_transferred
-        return 0
+        # Missing data is not a counter reset.
+        return None
 
     @property
     def icon(self) -> str:
