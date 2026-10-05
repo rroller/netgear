@@ -114,7 +114,7 @@ class NetgearDataUpdateCoordinator(DataUpdateCoordinator):
         self._unsub_logbook_ready = hass.bus.async_listen(
             EVENT_LOGBOOK_READY, self._async_handle_logbook_ready
         )
-        self._firmware_last_checked: int = 0
+        self._firmware_last_checked: float | None = None
         self._address = address
 
         super().__init__(hass, _LOGGER, name=DOMAIN, update_interval=SCAN_INTERVAL_SECONDS)
@@ -128,20 +128,23 @@ class NetgearDataUpdateCoordinator(DataUpdateCoordinator):
     async def _async_update_data(self) -> DeviceState:
         """Reload information by fetching from the API"""
         # Only check for firmware updates every 6 hours
-        check_firmware = False
         try:
-            check_firmware = (time.time() - self._firmware_last_checked) > 21600
+            check_firmware = (
+                self._firmware_last_checked is None
+                or time.monotonic() - self._firmware_last_checked >= 21600
+            )
 
             if check_firmware:
-                self._firmware_last_checked = time.time()
                 await self.client.check_for_firmware_updates()
+                self._firmware_last_checked = time.monotonic()
         except Exception as exception:
             # Not vital for this API to run so we'll pass on errors
             _LOGGER.info("Failed to check for firmware updates", exc_info=exception)
-            pass
 
         try:
-            self._state = await self.client.async_get_state(check_firmware)
+            # Read the AP's cached result on every poll, including results that
+            # arrive after the check or an upgrade performed in the device UI.
+            self._state = await self.client.async_get_state(check_firmware=True)
             self._ssids = await self.client.async_get_ssids()
             radios = ["wlan0", "wlan1"]
             if "wlan2" in self._state.stats:
@@ -304,7 +307,7 @@ class NetgearDataUpdateCoordinator(DataUpdateCoordinator):
         """Return the wireless clients associated with this access point."""
         return self._wireless_clients
 
-    def is_firmware_update_available(self) -> bool:
+    def is_firmware_update_available(self) -> bool | None:
         return self._state.firmware_update_available
 
     def total_number_of_devices(self) -> int:

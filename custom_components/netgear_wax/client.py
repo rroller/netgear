@@ -41,7 +41,7 @@ class DeviceState:
     serial_number: str = ""
     mac_address: str = ""
     firmware_version: str = ""
-    firmware_update_available: bool = False
+    firmware_update_available: bool | None = None
     device_name: str = ""
     model: str = ""
     total_number_of_devices: int = 0
