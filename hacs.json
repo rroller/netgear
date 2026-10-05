@@ -2,16 +2,5 @@
     "name": "Netgear WAX",
     "hacs": "1.6.0",
     "homeassistant": "2025.1.2",
-    "domains": [
-        "binary_sensor",
-        "sensor",
-        "switch"
-    ],
-    "iot_class": "Local Polling",
-    "render_readme": true,
-    "documentation": "https://github.com/rroller/netgear/blob/main/README.md",
-    "issue_tracker": "https://github.com/rroller/netgear/issues",
-    "codeowners": [
-        "@rroller"
-    ]
+    "render_readme": true
 }
