@@ -1,0 +1,6 @@
+-r requirements.txt
+pytest>=8.3
+pytest-asyncio>=0.25
+pytest-cov>=6.0
+pytest-timeout>=2.3
+pytest-xdist>=3.6

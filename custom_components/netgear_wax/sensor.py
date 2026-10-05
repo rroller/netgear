@@ -71,11 +71,9 @@ class NetgearUpdateSensor(NetgearSensor):
 
     @property
     def state(self):
-        if self._coordinator.is_firmware_update_available():
-            self._attr_unit_of_measurement = "pending update"
-            return 1
         self._attr_unit_of_measurement = "pending updates"
-        return 0
+        available = self._coordinator.is_firmware_update_available()
+        return None if available is None else int(available)
 
     @property
     def icon(self) -> str:

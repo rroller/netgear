@@ -76,12 +76,19 @@ SSID | Enables or disables a WI-FI ssid
 
 Sensor |  Description |
 :------------ | :------------ |
-Update Sensor | Shows when the device has a firmware update. Checked every few hours
+Update Sensor | Shows when the device reports a firmware update. Checks every six hours; failed checks retry on the next poll. The device's cached result is read every minute.
 WLAN Channel Util | Shows how saturated the channel is
 Traffic Sensor | Shows a count of bytes sent over the wlan or lan interface
 Connected Clients Sensor | Shows a count of the total number of connected clients. Its `connected_clients` attribute lists the wireless clients currently associated with this access point, including MAC/IP address, hostname, SSID, radio, OS, mode, VLAN, and username when available. Client connections and disconnections are also shown in the access point's Activity feed.
 IP Address Sensor | Shows the device IP address
 MAC Sensor | Shows the device MAC
+
+The Update sensor reports `1` when firmware is available and `0` when the device
+reports no update. It is unknown until a valid result is received, and retains
+the last valid result if a later response omits firmware information. Firmware
+installation is performed in the access point's web interface; this integration
+does not install firmware. The access point needs Internet access to check
+NETGEAR's firmware server.
 
 # Local development
 

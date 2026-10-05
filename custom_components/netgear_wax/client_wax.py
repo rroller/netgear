@@ -2,6 +2,7 @@
 import json
 import logging
 import time
+from copy import deepcopy
 
 import aiohttp
 from aiohttp import hdrs
@@ -34,6 +35,7 @@ class NetgearWaxClient(NetgearClient):
         self._lhttpdsid = ""
         self._security_token = ""
         self._internet_connectivity_check: Optional[float] = None
+        self._firmware_update_available: bool | None = None
 
         _LOGGER.debug("Creating client with username %s", username)
 
@@ -85,14 +87,16 @@ class NetgearWaxClient(NetgearClient):
 
     async def async_get_state(self, check_firmware: Optional[bool] = False) -> DeviceState:
         """ async_get_state gets the current state from the access point (mac address, name, firmware, etc) """
-        data = STATE_REQUEST_DATA.copy()
+        data = deepcopy(STATE_REQUEST_DATA)
 
-        if (self._internet_connectivity_check is None or time.time() - self._internet_connectivity_check) > 3600:
+        check_connectivity = (
+            self._internet_connectivity_check is None
+            or time.monotonic() - self._internet_connectivity_check >= 3600
+        )
+        if check_connectivity:
             system_data = data["system"]
             monitor_data = system_data["monitor"]
             monitor_data["internetConnectivityStatus"] = ""
-
-            self._internet_connectivity_check = time.time()
 
         if check_firmware:
             system_data = data["system"]
@@ -101,13 +105,13 @@ class NetgearWaxClient(NetgearClient):
                     "ImageVersion": ""
             }
 
-            self._firmware_update_check = time.time()
-
         request_data = json.dumps(data)
 
         result = await self.async_post(request_data)
         system = result["system"]
         monitor = system["monitor"]
+        if check_connectivity:
+            self._internet_connectivity_check = time.monotonic()
 
         state = DeviceState()
         state.firmware_version = monitor["sysVersion"]
@@ -116,8 +120,12 @@ class NetgearWaxClient(NetgearClient):
         state.mac_address = monitor["ethernetMacAddress"]
         state.serial_number = monitor["sysSerialNumber"]
         state.total_number_of_devices = monitor["totalNumberOfDevices"]
-        state.firmware_update_available = "FwUpdate" in system and "ImageAvailable" in system["FwUpdate"] and int(
-            system["FwUpdate"]["ImageAvailable"]) > 0
+        firmware = system.get("FwUpdate")
+        if isinstance(firmware, dict):
+            available = firmware.get("ImageAvailable")
+            if str(available) in ("0", "1"):
+                self._firmware_update_available = str(available) == "1"
+        state.firmware_update_available = self._firmware_update_available
         state.stats = {}
 
         if "stats" in monitor:
@@ -216,9 +224,7 @@ class NetgearWaxClient(NetgearClient):
         """ check_for_firmware_updates tells the device to check for firmware updates"""
         _LOGGER.debug("Checking for firmware updates")
         data = json.dumps({"method": 5, "upgradeCheck": 0})
-        response = await self._session.post(url=self._base_url + "/LogFile", data=data,
-                                            cookies=self.get_auth_cookie(), headers=self.get_auth_header())
-        response.raise_for_status()
+        await self.async_post(data, path="/LogFile")
 
     @staticmethod
     def load_wlan(ssid_index: str, wlan_id: str, vaps) -> List[Ssid]:
@@ -245,26 +251,29 @@ class NetgearWaxClient(NetgearClient):
 
         return ssids
 
-    async def async_post(self, data: {}):
-        async def call():
-            return await self._session.post(url=self._base_url + "/socketCommunication", data=data,
-                                            cookies=self.get_auth_cookie(), headers=self.get_auth_header())
-
-        response = await call()
-        text = await response.text()
-        result = json.loads(text)
-
-        if response.status == 401 or ("status" in result and result["status"] == 100):
+    async def async_post(self, data: str, path: str = "/socketCommunication"):
+        """Send an authenticated request and validate HTTP and device status."""
+        if not self._lhttpdsid or not self._security_token:
             await self.async_login()
-            response = await call()
+
+        for attempt in range(2):
+            response = await self._session.post(
+                url=self._base_url + path, data=data,
+                cookies=self.get_auth_cookie(), headers=self.get_auth_header(),
+            )
+            if response.status == 401 and attempt == 0:
+                response.release()
+                await self.async_login()
+                continue
             response.raise_for_status()
-            text = await response.text()
-            result = json.loads(text)
-
-        if result["status"] != 0:
-            _LOGGER.warning("Invalid response fetching state: %s", text)
-
-        return result
+            result = json.loads(await response.text())
+            status = str(result.get("status")) if isinstance(result, dict) else None
+            if status == "100" and attempt == 0:
+                await self.async_login()
+                continue
+            if status != "0":
+                raise ValueError(f"Netgear request to {path} failed with status {status}")
+            return result
 
     def get_auth_cookie(self) -> dict:
         return {"lhttpdsid": self._lhttpdsid}
