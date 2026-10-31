@@ -1,6 +1,7 @@
 """Adds config flow (UI flow) for Netgear WAX access points"""
 import logging
 
+import aiohttp
 import voluptuous as vol
 
 from homeassistant import config_entries
@@ -52,8 +53,6 @@ class NetgearFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 user_input[CONF_MAC] = data.get("mac")
                 title = data.get("name")
                 return self.async_create_entry(title=title, data=user_input)
-            else:
-                self._errors["base"] = "auth"
 
             return await self._show_config_form(user_input)
 
@@ -81,18 +80,35 @@ class NetgearFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def _test_credentials(self, username, password, address, port):
         """Return true if credentials is valid."""
+        session = async_create_clientsession(self.hass, verify_ssl=False)
+        client = NetgearWaxClient(username, password, address, port, session)
+        stage = "login"
         try:
-            session = async_create_clientsession(self.hass, verify_ssl=False)
-            client = NetgearWaxClient(username, password, address, port, session)
+            await client.async_login()
+            stage = "reading device state"
             state = await client.async_get_state()
-            # Log out is important, the device limits concurrent logins
-            await client.async_logout()
-            mac = state.mac_address
-            if state is not None and state.mac_address is not None:
-                return {"mac": mac, "name": state.device_name}
+            if state is None or not state.mac_address:
+                raise ValueError("Device state did not include a MAC address")
+            return {"mac": state.mac_address, "name": state.device_name}
+        except aiohttp.ClientResponseError as exception:
+            self._errors["base"] = (
+                "auth" if stage == "login" and exception.status in (401, 403)
+                else "cannot_connect"
+            )
+            _LOGGER.debug("Setup failed during %s", stage, exc_info=True)
+        except (aiohttp.ClientError, TimeoutError):
+            self._errors["base"] = "cannot_connect"
+            _LOGGER.debug("Setup failed during %s", stage, exc_info=True)
         except Exception as exception:  # pylint: disable=broad-except
-            _LOGGER.error("Failed: %s", exception, exc_info=exception)
-            pass
+            self._errors["base"] = "invalid_response"
+            _LOGGER.debug("Setup failed during %s", stage, exc_info=exception)
+        finally:
+            # Release device sessions even if reading state failed after login.
+            # Logout must not hide the setup result or its original error.
+            try:
+                await client.async_logout()
+            except Exception:
+                _LOGGER.debug("Failed to log out after setup", exc_info=True)
 
 
 class NetgearOptionsFlowHandler(config_entries.OptionsFlow):

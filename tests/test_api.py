@@ -355,3 +355,33 @@ async def test_stop_preserves_cancellation(coordinator, client):
     client._session.post.side_effect = asyncio.CancelledError()
     with pytest.raises(asyncio.CancelledError):
         await coordinator.async_stop({})
+
+
+@pytest.mark.parametrize("token_location", ["header", "body", "missing_cookie", "missing_token"])
+async def test_login_diagnostics_do_not_expose_response_secrets(client, caplog, token_location):
+    """Login diagnostics must not include raw HTML, cookies, or security tokens."""
+    cookie = "private-session-cookie"
+    token = "private-security-token"
+    body_secret = "private-response-content"
+    client._session.get.return_value = response(
+        body=body_secret,
+        headers={} if token_location == "missing_cookie" else {
+            "Set-Cookie": f"lhttpdsid={cookie}; Path=/; HttpOnly"
+        },
+    )
+    client._session.post.return_value = response(
+        {"system": {"security_token": token}} if token_location == "body" else {
+            "message": body_secret
+        },
+        headers={"security": token} if token_location == "header" else {},
+    )
+    with caplog.at_level("DEBUG", logger="custom_components.netgear_wax"):
+        if token_location.startswith("missing"):
+            with pytest.raises(ValueError) as error:
+                await client.async_login()
+            assert body_secret not in str(error.value)
+        else:
+            await client.async_login()
+            assert client._security_token == token
+    for secret in (cookie, token, body_secret):
+        assert secret not in caplog.text
