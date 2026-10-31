@@ -123,7 +123,11 @@ class NetgearDataUpdateCoordinator(DataUpdateCoordinator):
         """ Stop anything we need to stop """
         self._unsub_logbook_ready()
         # Log out is important, the device limits concurrent logins
-        await self.client.async_logout()
+        try:
+            await self.client.async_logout()
+        except Exception:
+            # A device failure must not prevent local cleanup during unload.
+            _LOGGER.debug("Failed to log out", exc_info=True)
 
     async def _async_update_data(self) -> DeviceState:
         """Reload information by fetching from the API"""

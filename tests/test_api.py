@@ -1,5 +1,6 @@
 """Firmware regression tests using real HA classes and mocked device responses."""
 
+import asyncio
 from copy import deepcopy
 import json
 from types import SimpleNamespace
@@ -12,10 +13,13 @@ from multidict import CIMultiDict
 import pytest
 import pytest_asyncio
 
-from custom_components.netgear_wax import NetgearDataUpdateCoordinator
+from custom_components.netgear_wax import (
+    NetgearDataUpdateCoordinator,
+    async_unload_entry,
+)
 from custom_components.netgear_wax.client import DeviceState
 from custom_components.netgear_wax.client_wax import NetgearWaxClient
-from custom_components.netgear_wax.const import STATE_REQUEST_DATA
+from custom_components.netgear_wax.const import DOMAIN, PLATFORMS, STATE_REQUEST_DATA
 from custom_components.netgear_wax.sensor import NetgearUpdateSensor
 
 pytestmark = pytest.mark.asyncio
@@ -301,3 +305,53 @@ async def test_initial_sensor_unknown_until_valid_result(coordinator):
     coordinator._state = DeviceState()
     sensor = NetgearUpdateSensor(coordinator, SimpleNamespace(), "Update")
     assert sensor.state is None
+
+
+@pytest.mark.parametrize("failure", [None, "http500", "connection", "timeout"])
+@pytest.mark.parametrize("platforms_unloaded", [True, False])
+async def test_logout_does_not_block_unload(
+    coordinator, client, failure, platforms_unloaded, caplog
+):
+    """Device logout failures must not skip platform cleanup or alter its result."""
+    if failure == "http500":
+        client._session.post.return_value = response(status=500)
+    elif failure == "connection":
+        client._session.post.side_effect = aiohttp.ClientConnectionError("offline")
+    elif failure == "timeout":
+        client._session.post.side_effect = TimeoutError()
+    else:
+        client._session.post.return_value = response({})
+
+    hass = coordinator.hass
+    entry = SimpleNamespace(entry_id="test-entry")
+    hass.data[DOMAIN] = {entry.entry_id: coordinator}
+    coordinator.platforms = list(PLATFORMS)
+    unsubscribe = Mock(wraps=coordinator._unsub_logbook_ready)
+    coordinator._unsub_logbook_ready = unsubscribe
+    unload = AsyncMock(return_value=platforms_unloaded)
+    with (
+        caplog.at_level("DEBUG", logger="custom_components.netgear_wax"),
+        patch.object(
+            hass,
+            "config_entries",
+            SimpleNamespace(async_forward_entry_unload=unload),
+        ),
+    ):
+        assert await async_unload_entry(hass, entry) is platforms_unloaded
+
+    unsubscribe.assert_called_once_with()
+    client._session.post.assert_awaited_once()
+    assert client._session.post.call_args.kwargs["url"].endswith("/logout")
+    assert unload.await_count == len(PLATFORMS)
+    assert {call.args[1] for call in unload.await_args_list} == set(PLATFORMS)
+    assert (entry.entry_id not in hass.data[DOMAIN]) is platforms_unloaded
+    if failure:
+        record = next(r for r in caplog.records if r.message == "Failed to log out")
+        assert record.exc_info is not None
+
+
+async def test_stop_preserves_cancellation(coordinator, client):
+    """Best-effort logout must still allow task cancellation to propagate."""
+    client._session.post.side_effect = asyncio.CancelledError()
+    with pytest.raises(asyncio.CancelledError):
+        await coordinator.async_stop({})
