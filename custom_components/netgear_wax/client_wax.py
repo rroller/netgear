@@ -45,19 +45,17 @@ class NetgearWaxClient(NetgearClient):
 
         # Login step 1 - Get lhttpdsid cookie
         response: ClientResponse = await self._session.get(self._base_url)
+        response.raise_for_status()
         cookies: dict = self.get_cookies(response)
         lhttpdsid = cookies.get("lhttpdsid")
         if lhttpdsid is None:
-            text = await response.text()
-            raise Exception("Could not get lhttpdsid cookie: " + text)
-        response.raise_for_status()
+            raise ValueError("Login response did not include an lhttpdsid cookie")
 
         # Login step 2 - Get security token
         data = json.dumps({"system": {"basicSettings": {"adminName": self._username, "adminPasswd": self._password}}})
         response = await self._session.post(url=self._base_url + "/socketCommunication", data=data,
                                             cookies={"lhttpdsid": lhttpdsid})
         response.raise_for_status()
-        _LOGGER.debug("login security token response=%s", await response.text())
 
         # Older firmwares use a response header
         security_token = response.headers.get("security")
@@ -71,7 +69,7 @@ class NetgearWaxClient(NetgearClient):
                 security_token = result["system"]["security_token"]
 
         if security_token is None:
-            raise Exception("Could not get security token: " + text)
+            raise ValueError("Login response did not include a security token")
 
         # TODO: is python thread safe? I have no idea. If not, we should guard when settings these two values
         self._lhttpdsid = lhttpdsid

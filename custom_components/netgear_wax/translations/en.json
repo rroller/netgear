@@ -13,7 +13,9 @@
       }
     },
     "error": {
-      "auth": "Username, Password, or Address is wrong."
+      "auth": "The access point rejected the login. Check the local administrator username and password.",
+      "cannot_connect": "Unable to communicate with the access point. Check the address, port, and network connection. Enable debug logging for details.",
+      "invalid_response": "The access point returned an unexpected response. Its firmware or API may be incompatible. Enable debug logging for details."
     },
     "abort": {
       "single_instance_allowed": "Only a single instance is allowed."
