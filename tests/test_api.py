@@ -20,6 +20,7 @@ from custom_components.netgear_wax import (
 from custom_components.netgear_wax.client import DeviceState
 from custom_components.netgear_wax.client_wax import NetgearWaxClient
 from custom_components.netgear_wax.const import DOMAIN, PLATFORMS, STATE_REQUEST_DATA
+from custom_components.netgear_wax.entity import NetgearBaseEntity
 from custom_components.netgear_wax.sensor import NetgearUpdateSensor
 
 pytestmark = pytest.mark.asyncio
@@ -80,6 +81,13 @@ async def coordinator(tmp_path, client):
     client.async_get_wireless_clients = AsyncMock(return_value=[])
     yield result
     result._unsub_logbook_ready()
+
+
+async def test_entities_use_coordinator_updates_without_individual_polling(coordinator):
+    """Coordinator entities must not schedule a second per-entity refresh."""
+    entity = NetgearBaseEntity(coordinator, SimpleNamespace())
+
+    assert entity.should_poll is False
 
 
 @pytest.mark.parametrize("status", [0, "0"])
