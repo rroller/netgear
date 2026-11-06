@@ -11,6 +11,11 @@ from custom_components.netgear_wax.config_flow import NetgearFlowHandler
 pytestmark = pytest.mark.asyncio
 
 
+async def test_config_flow_does_not_use_deprecated_connection_class():
+    """The manifest iot_class replaces ConfigFlow.CONNECTION_CLASS."""
+    assert "CONNECTION_CLASS" not in NetgearFlowHandler.__dict__
+
+
 @pytest.mark.parametrize("logout_error", [None, TimeoutError(), aiohttp.ClientConnectionError()])
 async def test_successful_discovery_survives_logout_failure(logout_error):
     """Logout failures must not reject a successfully discovered access point."""
