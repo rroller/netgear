@@ -8,6 +8,7 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import aiohttp
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.update_coordinator import UpdateFailed
 from multidict import CIMultiDict
 import pytest
@@ -15,6 +16,7 @@ import pytest_asyncio
 
 from custom_components.netgear_wax import (
     NetgearDataUpdateCoordinator,
+    async_setup_entry,
     async_unload_entry,
 )
 from custom_components.netgear_wax.client import DeviceState
@@ -393,3 +395,115 @@ async def test_login_diagnostics_do_not_expose_response_secrets(client, caplog, 
             assert client._security_token == token
     for secret in (cookie, token, body_secret):
         assert secret not in caplog.text
+
+
+class FakeCoordinator:
+    """Coordinator whose first refresh is released by the test."""
+
+    instances = []
+
+    def __init__(self, *args, **kwargs):
+        """Record the instance so tests can reach it."""
+        self.release = asyncio.Event()
+        self.last_update_success = True
+        self.platforms = []
+        self.async_stop = AsyncMock()
+        type(self).instances.append(self)
+
+    async def async_refresh(self):
+        """Wait until the test lets the refresh finish."""
+        await self.release.wait()
+
+
+@pytest_asyncio.fixture
+async def setup_env(tmp_path):
+    """Provide a bare hass and config entry for async_setup_entry."""
+    FakeCoordinator.instances = []
+    hass = HomeAssistant(str(tmp_path))
+    hass.data[DOMAIN] = {}
+    hass.config_entries = SimpleNamespace(
+        async_forward_entry_setups=AsyncMock(),
+        async_forward_entry_unload=AsyncMock(return_value=True),
+    )
+    entry = SimpleNamespace(
+        entry_id="test-entry",
+        data={
+            "username": "admin",
+            "password": "test-password",
+            "address": "ap.example",
+            "port": 443,
+            "mac": "test-mac",
+        },
+        options={},
+        add_update_listener=Mock(),
+        async_on_unload=Mock(),
+    )
+    with patch("custom_components.netgear_wax.NetgearDataUpdateCoordinator", FakeCoordinator), patch(
+        "custom_components.netgear_wax.FIRST_REFRESH_TIMEOUT", 0.05
+    ):
+        yield hass, entry
+
+
+async def test_slow_first_refresh_is_retried_without_a_second_login(setup_env):
+    """A slow AP must not block setup, and the retry must reuse the same refresh."""
+    hass, entry = setup_env
+
+    with pytest.raises(ConfigEntryNotReady):
+        await async_setup_entry(hass, entry)
+    assert len(FakeCoordinator.instances) == 1
+
+    FakeCoordinator.instances[0].release.set()
+    assert await async_setup_entry(hass, entry) is True
+
+    assert len(FakeCoordinator.instances) == 1
+    assert hass.data[DOMAIN][entry.entry_id] is FakeCoordinator.instances[0]
+    assert entry.entry_id not in hass.data[DOMAIN]["pending_setup"]
+
+
+async def test_failed_first_refresh_logs_out_and_clears_pending(setup_env):
+    """A refresh that finishes with an error must release the login and retry cleanly."""
+    hass, entry = setup_env
+
+    with pytest.raises(ConfigEntryNotReady):
+        await async_setup_entry(hass, entry)
+    coordinator = FakeCoordinator.instances[0]
+    coordinator.last_update_success = False
+    coordinator.release.set()
+
+    with pytest.raises(ConfigEntryNotReady):
+        await async_setup_entry(hass, entry)
+
+    coordinator.async_stop.assert_awaited_once()
+    assert entry.entry_id not in hass.data[DOMAIN]["pending_setup"]
+
+
+async def test_unload_while_first_refresh_is_pending_cancels_it(setup_env):
+    """Removing an entry that never finished setup must cancel the refresh and log out."""
+    hass, entry = setup_env
+
+    with pytest.raises(ConfigEntryNotReady):
+        await async_setup_entry(hass, entry)
+    task = hass.data[DOMAIN]["pending_setup"][entry.entry_id][1]
+
+    assert await async_unload_entry(hass, entry) is True
+    await asyncio.sleep(0)
+
+    assert task.cancelled()
+    FakeCoordinator.instances[0].async_stop.assert_awaited_once()
+    assert entry.entry_id not in hass.data[DOMAIN]["pending_setup"]
+
+
+async def test_reconfigured_entry_does_not_reuse_a_stale_pending_refresh(setup_env):
+    """New credentials must replace a pending refresh started with the old ones."""
+    hass, entry = setup_env
+
+    with pytest.raises(ConfigEntryNotReady):
+        await async_setup_entry(hass, entry)
+    first = FakeCoordinator.instances[0]
+    entry.data = {**entry.data, "password": "changed"}
+
+    with pytest.raises(ConfigEntryNotReady):
+        await async_setup_entry(hass, entry)
+
+    assert len(FakeCoordinator.instances) == 2
+    first.async_stop.assert_awaited_once()
