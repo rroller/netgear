@@ -9,11 +9,14 @@ import logging
 from datetime import timedelta
 
 from homeassistant.core_config import Config
-from homeassistant.config_entries import ConfigEntry
+from homeassistant.config_entries import (
+    ConfigEntry, ConfigEntryChange, SIGNAL_CONFIG_ENTRY_CHANGED,
+)
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP
 
@@ -37,8 +40,25 @@ from .const import (
 
 SCAN_INTERVAL_SECONDS = timedelta(seconds=60)
 FIRST_REFRESH_TIMEOUT = 10  # seconds to wait for the first refresh before retrying
+CLEANUP_TIMEOUT = 5  # seconds for cancelling refreshes and best-effort logout
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
+
+
+async def _async_stop_pending_setup(hass: HomeAssistant, entry_id: str):
+    """Release a pending refresh even when HA skips the integration unload hook."""
+    cached = hass.data[DOMAIN].get(DATA_PENDING_SETUP, {}).pop(entry_id, None)
+    if cached is None:
+        return
+    coordinator, task, _, unsubscribe = cached
+    unsubscribe()
+    task.cancel()
+    try:
+        async with asyncio.timeout(CLEANUP_TIMEOUT):
+            await asyncio.gather(task, return_exceptions=True)
+            await coordinator.async_stop({})
+    except TimeoutError:
+        _LOGGER.debug("Timed out cleaning up pending setup for %s", entry_id)
 
 
 async def async_setup(hass: HomeAssistant, config: Config):
@@ -72,8 +92,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     cached = pending.get(entry.entry_id)
     if cached is not None and cached[2] != signature:
         # The entry was reconfigured while its first refresh was pending.
-        cached[1].cancel()
-        await cached[0].async_stop({})
+        await _async_stop_pending_setup(hass, entry.entry_id)
         cached = None
     if cached is None:
         coordinator = NetgearDataUpdateCoordinator(
@@ -82,18 +101,46 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         task = hass.async_create_background_task(
             coordinator.async_refresh(), f"{DOMAIN} first refresh {entry.entry_id}"
         )
-        pending[entry.entry_id] = (coordinator, task, signature)
+        @callback
+        def entry_changed(change, changed_entry):
+            if changed_entry.entry_id == entry.entry_id and (
+                change == ConfigEntryChange.REMOVED or changed_entry.disabled_by
+            ):
+                hass.async_create_background_task(
+                    _async_stop_pending_setup(hass, entry.entry_id),
+                    f"{DOMAIN} discard pending setup {entry.entry_id}",
+                )
+
+        unsub_entry = async_dispatcher_connect(
+            hass, SIGNAL_CONFIG_ENTRY_CHANGED, entry_changed
+        )
+
+        async def stop_pending(event):
+            await _async_stop_pending_setup(hass, entry.entry_id)
+
+        unsub_stop = hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, stop_pending)
+
+        @callback
+        def unsubscribe():
+            unsub_entry()
+            unsub_stop()
+
+        pending[entry.entry_id] = (coordinator, task, signature, unsubscribe)
     else:
-        coordinator, task, _ = cached
+        coordinator, task, _, _ = cached
 
     await asyncio.wait({task}, timeout=FIRST_REFRESH_TIMEOUT)
     if not task.done():
         raise ConfigEntryNotReady("Access point is slow to answer, retrying in the background")
 
-    pending.pop(entry.entry_id, None)
-    if not coordinator.last_update_success:
-        await coordinator.async_stop({})
+    # A removal/disable signal may have disposed of this refresh while we waited.
+    if entry.entry_id not in pending or task.cancelled():
+        raise ConfigEntryNotReady("Initial refresh was cancelled")
+    if not coordinator.last_update_success or task.exception() is not None:
+        await _async_stop_pending_setup(hass, entry.entry_id)
         raise ConfigEntryNotReady
+
+    pending.pop(entry.entry_id)[3]()
 
     hass.data[DOMAIN][entry.entry_id] = coordinator
 
@@ -151,7 +198,8 @@ class NetgearDataUpdateCoordinator(DataUpdateCoordinator):
         self._unsub_logbook_ready()
         # Log out is important, the device limits concurrent logins
         try:
-            await self.client.async_logout()
+            async with asyncio.timeout(CLEANUP_TIMEOUT):
+                await self.client.async_logout()
         except Exception:
             # A device failure must not prevent local cleanup during unload.
             _LOGGER.debug("Failed to log out", exc_info=True)
@@ -350,12 +398,10 @@ class NetgearDataUpdateCoordinator(DataUpdateCoordinator):
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Handle removal of an entry."""
-    pending = hass.data[DOMAIN].get(DATA_PENDING_SETUP, {}).pop(entry.entry_id, None)
+    pending = hass.data[DOMAIN].get(DATA_PENDING_SETUP, {}).get(entry.entry_id)
     if pending is not None:
         # Setup never finished: stop the first refresh and release the login.
-        pending_coordinator, pending_task, _ = pending
-        pending_task.cancel()
-        await pending_coordinator.async_stop({})
+        await _async_stop_pending_setup(hass, entry.entry_id)
         return True
     coordinator = hass.data[DOMAIN][entry.entry_id]
     await coordinator.async_stop({})

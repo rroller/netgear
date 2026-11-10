@@ -507,3 +507,107 @@ async def test_reconfigured_entry_does_not_reuse_a_stale_pending_refresh(setup_e
 
     assert len(FakeCoordinator.instances) == 2
     first.async_stop.assert_awaited_once()
+
+
+@pytest.mark.parametrize("change", ["removed", "disabled", "shutdown"])
+async def test_pending_setup_cleanup_without_integration_unload(setup_env, change):
+    """Retry-state entries must clean up even when HA skips integration unload."""
+    from types import MappingProxyType
+    from homeassistant.config_entries import (
+        ConfigEntry, ConfigEntryState, ConfigEntryChange,
+        ConfigEntryDisabler, SIGNAL_CONFIG_ENTRY_CHANGED,
+    )
+    from homeassistant.const import EVENT_HOMEASSISTANT_STOP
+    from homeassistant.helpers.dispatcher import async_dispatcher_send
+
+    hass, fake_entry = setup_env
+    entry = ConfigEntry(
+        data=fake_entry.data, discovery_keys=MappingProxyType({}), domain=DOMAIN,
+        entry_id=fake_entry.entry_id, minor_version=1, options={}, source="user",
+        title="AP", unique_id="test", version=1, state=ConfigEntryState.SETUP_RETRY,
+    )
+    with pytest.raises(ConfigEntryNotReady):
+        await async_setup_entry(hass, entry)
+    task = hass.data[DOMAIN]["pending_setup"][entry.entry_id][1]
+    component = SimpleNamespace(async_unload_entry=AsyncMock())
+    integration = SimpleNamespace(
+        domain=DOMAIN, async_get_component=AsyncMock(return_value=component)
+    )
+    async with entry.setup_lock:
+        assert await entry.async_unload(hass, integration=integration)
+    component.async_unload_entry.assert_not_called()
+
+    if change == "shutdown":
+        hass.bus.async_fire(EVENT_HOMEASSISTANT_STOP)
+    else:
+        if change == "disabled":
+            object.__setattr__(entry, "disabled_by", ConfigEntryDisabler.USER)
+        async_dispatcher_send(
+            hass, SIGNAL_CONFIG_ENTRY_CHANGED,
+            ConfigEntryChange.REMOVED if change == "removed" else ConfigEntryChange.UPDATED,
+            entry,
+        )
+    await hass.async_block_till_done(wait_background_tasks=True)
+    assert task.cancelled()
+    assert entry.entry_id not in hass.data[DOMAIN]["pending_setup"]
+    FakeCoordinator.instances[0].async_stop.assert_awaited_once()
+
+
+async def test_failed_refresh_cleanup_has_a_deadline(setup_env):
+    """A stalled logout cannot keep a failed setup attempt waiting indefinitely."""
+    hass, entry = setup_env
+    with pytest.raises(ConfigEntryNotReady):
+        await async_setup_entry(hass, entry)
+    coordinator = FakeCoordinator.instances[0]
+    coordinator.last_update_success = False
+    coordinator.release.set()
+    cancelled = asyncio.Event()
+
+    async def stop(event):
+        try:
+            await asyncio.Event().wait()
+        finally:
+            cancelled.set()
+
+    coordinator.async_stop = AsyncMock(side_effect=stop)
+    with patch("custom_components.netgear_wax.CLEANUP_TIMEOUT", 0.01):
+        with pytest.raises(ConfigEntryNotReady):
+            await asyncio.wait_for(async_setup_entry(hass, entry), timeout=0.2)
+    assert cancelled.is_set()
+    assert entry.entry_id not in hass.data[DOMAIN]["pending_setup"]
+
+
+async def test_logout_timeout_releases_logbook_listener(coordinator, client):
+    """Bounded logout still removes the coordinator's event listener."""
+    unsubscribe = Mock(wraps=coordinator._unsub_logbook_ready)
+    coordinator._unsub_logbook_ready = unsubscribe
+    cancelled = asyncio.Event()
+
+    async def logout():
+        try:
+            await asyncio.Event().wait()
+        finally:
+            cancelled.set()
+
+    client.async_logout = AsyncMock(side_effect=logout)
+    with patch("custom_components.netgear_wax.CLEANUP_TIMEOUT", 0.01):
+        await asyncio.wait_for(coordinator.async_stop({}), timeout=0.2)
+    unsubscribe.assert_called_once_with()
+    assert cancelled.is_set()
+
+
+async def test_pending_listeners_are_removed_after_success(setup_env):
+    """Signals after successful setup must not dispose of the loaded coordinator."""
+    from homeassistant.config_entries import ConfigEntryChange, SIGNAL_CONFIG_ENTRY_CHANGED
+    from homeassistant.helpers.dispatcher import async_dispatcher_send
+
+    hass, entry = setup_env
+    with pytest.raises(ConfigEntryNotReady):
+        await async_setup_entry(hass, entry)
+    coordinator = FakeCoordinator.instances[0]
+    coordinator.release.set()
+    assert await async_setup_entry(hass, entry)
+    async_dispatcher_send(hass, SIGNAL_CONFIG_ENTRY_CHANGED, ConfigEntryChange.REMOVED, entry)
+    await hass.async_block_till_done(wait_background_tasks=True)
+    coordinator.async_stop.assert_not_awaited()
+    assert hass.data[DOMAIN][entry.entry_id] is coordinator
