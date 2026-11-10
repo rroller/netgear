@@ -28,6 +28,7 @@ from .const import (
     CONF_ADDRESS,
     DOMAIN,
     DATA_LOGBOOK_READY,
+    DATA_PENDING_SETUP,
     EVENT_CLIENT_ACTIVITY,
     EVENT_LOGBOOK_READY,
     PLATFORMS,
@@ -35,6 +36,7 @@ from .const import (
 )
 
 SCAN_INTERVAL_SECONDS = timedelta(seconds=60)
+FIRST_REFRESH_TIMEOUT = 10  # seconds to wait for the first refresh before retrying
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
@@ -60,12 +62,37 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     port = int(entry.data.get(CONF_PORT))
     mac = entry.data.get(CONF_MAC)
 
-    coordinator = NetgearDataUpdateCoordinator(
-        hass, address, port, username, password, mac, entry.entry_id
-    )
-    await coordinator.async_config_entry_first_refresh()
+    # A slow access point must not hold up Home Assistant startup. The first
+    # refresh runs as a background task that outlives this attempt; if it is
+    # not done within FIRST_REFRESH_TIMEOUT the entry is retried by Home
+    # Assistant and reuses the same coordinator and task, so the device sees
+    # a single login.
+    pending = hass.data[DOMAIN].setdefault(DATA_PENDING_SETUP, {})
+    signature = (address, port, username, password, mac)
+    cached = pending.get(entry.entry_id)
+    if cached is not None and cached[2] != signature:
+        # The entry was reconfigured while its first refresh was pending.
+        cached[1].cancel()
+        await cached[0].async_stop({})
+        cached = None
+    if cached is None:
+        coordinator = NetgearDataUpdateCoordinator(
+            hass, address, port, username, password, mac, entry.entry_id
+        )
+        task = hass.async_create_background_task(
+            coordinator.async_refresh(), f"{DOMAIN} first refresh {entry.entry_id}"
+        )
+        pending[entry.entry_id] = (coordinator, task, signature)
+    else:
+        coordinator, task, _ = cached
 
+    await asyncio.wait({task}, timeout=FIRST_REFRESH_TIMEOUT)
+    if not task.done():
+        raise ConfigEntryNotReady("Access point is slow to answer, retrying in the background")
+
+    pending.pop(entry.entry_id, None)
     if not coordinator.last_update_success:
+        await coordinator.async_stop({})
         raise ConfigEntryNotReady
 
     hass.data[DOMAIN][entry.entry_id] = coordinator
@@ -323,6 +350,13 @@ class NetgearDataUpdateCoordinator(DataUpdateCoordinator):
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Handle removal of an entry."""
+    pending = hass.data[DOMAIN].get(DATA_PENDING_SETUP, {}).pop(entry.entry_id, None)
+    if pending is not None:
+        # Setup never finished: stop the first refresh and release the login.
+        pending_coordinator, pending_task, _ = pending
+        pending_task.cancel()
+        await pending_coordinator.async_stop({})
+        return True
     coordinator = hass.data[DOMAIN][entry.entry_id]
     await coordinator.async_stop({})
     unloaded = all(
