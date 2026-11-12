@@ -142,6 +142,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     pending.pop(entry.entry_id)[3]()
 
+    # Pending refreshes survive failed setup attempts. Only attach entry-owned
+    # shutdown after success, otherwise HA's retry cleanup shuts down the
+    # cached coordinator and its debouncer before the next attempt reuses it.
+    coordinator.config_entry = entry
+    entry.async_on_unload(coordinator.async_shutdown)
     hass.data[DOMAIN][entry.entry_id] = coordinator
 
     # https://developers.home-assistant.io/docs/config_entries_index/
@@ -150,7 +155,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
             coordinator.platforms.append(platform)
             await hass.config_entries.async_forward_entry_setups(entry, [platform])
 
-    entry.add_update_listener(async_reload_entry)
+    entry.async_on_unload(entry.add_update_listener(async_reload_entry))
 
     entry.async_on_unload(
         hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, coordinator.async_stop)
@@ -191,11 +196,15 @@ class NetgearDataUpdateCoordinator(DataUpdateCoordinator):
         self._firmware_last_checked: float | None = None
         self._address = address
 
-        super().__init__(hass, _LOGGER, name=DOMAIN, update_interval=SCAN_INTERVAL_SECONDS)
+        super().__init__(
+            hass, _LOGGER, config_entry=None, name=DOMAIN,
+            update_interval=SCAN_INTERVAL_SECONDS,
+        )
 
     async def async_stop(self, event: Any):
         """ Stop anything we need to stop """
         self._unsub_logbook_ready()
+        await self.async_shutdown()
         # Log out is important, the device limits concurrent logins
         try:
             async with asyncio.timeout(CLEANUP_TIMEOUT):
@@ -422,5 +431,4 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Reload config entry."""
-    await async_unload_entry(hass, entry)
-    await async_setup_entry(hass, entry)
+    await hass.config_entries.async_reload(entry.entry_id)

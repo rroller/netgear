@@ -412,6 +412,7 @@ class FakeCoordinator:
         self.last_update_success = True
         self.platforms = []
         self.async_stop = AsyncMock()
+        self.async_shutdown = AsyncMock()
         type(self).instances.append(self)
 
     async def async_refresh(self):
@@ -645,3 +646,91 @@ async def test_force_update_fetches_data_with_automatic_polling_disabled(coordin
     finally:
         unsubscribe()
         await coordinator.async_shutdown()
+
+
+@pytest.mark.parametrize("polling_disabled", [True, False])
+async def test_retry_cleanup_does_not_shutdown_cached_coordinator(tmp_path, client, polling_disabled):
+    """Use HA's real failed-setup cleanup before reusing a pending coordinator."""
+    from types import MappingProxyType
+    from homeassistant.config_entries import ConfigEntry, current_entry
+    from homeassistant.helpers.entity_component import DATA_INSTANCES, async_update_entity
+
+    hass = HomeAssistant(str(tmp_path))
+    from homeassistant.helpers import frame
+    if hasattr(frame, "async_setup"):
+        frame.async_setup(hass)
+    client.async_logout = AsyncMock()
+    hass.data[DOMAIN] = {}
+    hass.config_entries = SimpleNamespace(async_forward_entry_setups=AsyncMock())
+    kwargs = {"subentries_data": []} if "subentries_data" in inspect.signature(ConfigEntry).parameters else {}
+    entry = ConfigEntry(
+        data={"username": "admin", "password": "pw", "address": "ap.example", "port": 443, "mac": "test-mac"},
+        discovery_keys=MappingProxyType({}), domain=DOMAIN, minor_version=1,
+        options={}, source="user", title="AP", unique_id="test", version=1,
+        pref_disable_polling=polling_disabled, **kwargs,
+    )
+    release = asyncio.Event()
+    refreshes = []
+
+    async def fetch(coordinator):
+        refreshes.append(coordinator)
+        await release.wait()
+        coordinator._state = DeviceState()
+        return coordinator._state
+
+    token = current_entry.set(entry)
+    unsubscribe = None
+    coordinator = None
+    try:
+        with (
+            patch("custom_components.netgear_wax.async_get_clientsession"),
+            patch("custom_components.netgear_wax.NetgearWaxClient", return_value=client),
+            patch.object(NetgearDataUpdateCoordinator, "_async_update_data", fetch),
+            patch("custom_components.netgear_wax.FIRST_REFRESH_TIMEOUT", 0.01),
+        ):
+            with pytest.raises(ConfigEntryNotReady):
+                await async_setup_entry(hass, entry)
+            coordinator = hass.data[DOMAIN]["pending_setup"][entry.entry_id][0]
+            # ConfigEntry.async_setup runs this cleanup after ConfigEntryNotReady.
+            await entry._async_process_on_unload(hass)
+            assert not coordinator._shutdown_requested
+            release.set()
+            assert await async_setup_entry(hass, entry)
+            assert hass.data[DOMAIN][entry.entry_id] is coordinator
+            assert coordinator.config_entry is entry
+            unsubscribe = coordinator.async_add_listener(Mock())
+            assert (coordinator._unsub_refresh is None) is polling_disabled
+            entity = NetgearBaseEntity(coordinator, entry)
+            entity.hass = hass
+            entity.entity_id = "sensor.retry_refresh"
+            entity._async_write_ha_state = Mock()
+            hass.data[DATA_INSTANCES] = {"sensor": SimpleNamespace(get_entity=Mock(return_value=entity))}
+            await async_update_entity(hass, entity.entity_id)
+            assert refreshes == [coordinator, coordinator]
+            entity._async_write_ha_state.assert_called_once()
+            if not polling_disabled:
+                coordinator._async_unsub_refresh()
+                await coordinator._handle_refresh_interval(None)
+                assert refreshes == [coordinator, coordinator, coordinator]
+            await entry._async_process_on_unload(hass)
+            assert coordinator._shutdown_requested
+            assert coordinator._unsub_refresh is None
+            assert not entry.update_listeners
+    finally:
+        current_entry.reset(token)
+        release.set()
+        if unsubscribe:
+            unsubscribe()
+        if coordinator:
+            await coordinator.async_stop({})
+
+
+async def test_reload_uses_home_assistant_entry_lifecycle():
+    """Reload must run entry unload callbacks and serialize through HA."""
+    from custom_components.netgear_wax import async_reload_entry
+
+    reload_entry = AsyncMock(return_value=True)
+    hass = SimpleNamespace(config_entries=SimpleNamespace(async_reload=reload_entry))
+    entry = SimpleNamespace(entry_id="test-entry")
+    await async_reload_entry(hass, entry)
+    reload_entry.assert_awaited_once_with(entry.entry_id)
