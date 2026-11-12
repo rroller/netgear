@@ -67,3 +67,31 @@ async def test_setup_reports_failure_stage_and_preserves_original_error(stage, f
     record = next(r for r in caplog.records if r.message == f"Setup failed during {stage}")
     assert record.exc_info[1] is failure
     client.async_logout.assert_awaited_once()
+
+
+@pytest.mark.parametrize("existing", [{}, {"sensor": False, "switch": True, "custom": "preserve"}])
+async def test_options_flow_opens_and_saves_without_assigning_config_entry(tmp_path, existing):
+    """Open the form after HA attaches the entry, preserving defaults and options."""
+    from homeassistant.core import HomeAssistant
+    from custom_components.netgear_wax.const import PLATFORMS
+
+    entry = SimpleNamespace(entry_id="options-entry", options=existing.copy(), data={"username": "admin"})
+    # Construction must succeed before hass/handler are assigned, including on
+    # HA versions where OptionsFlow.config_entry has no setter.
+    flow = NetgearFlowHandler.async_get_options_flow(entry)
+    hass = HomeAssistant(str(tmp_path))
+    hass.config_entries = SimpleNamespace(async_get_known_entry=Mock(return_value=entry))
+    flow.hass = hass
+    flow.handler = entry.entry_id
+
+    result = await flow.async_step_init()
+    assert result["type"] == "form"
+    assert result["step_id"] == "user"
+    defaults = result["data_schema"]({})
+    assert defaults == {platform: existing.get(platform, True) for platform in PLATFORMS}
+
+    submitted = {"sensor": True, "switch": False, "binary_sensor": False}
+    saved = await flow.async_step_user(submitted)
+    assert saved["type"] == "create_entry"
+    assert saved["data"] == {**existing, **submitted}
+    assert entry.options == existing

@@ -34,16 +34,25 @@ jobs:
 
   tests:
     runs-on: "ubuntu-latest"
-    name: Run tests
+    name: Run tests (HA ${{ matrix.ha }})
+    strategy:
+      matrix:
+        include:
+          - ha: "2025.1"
+            python: "3.13"
+            requirements: "-r requirements_test.txt"
+          - ha: "2026.11.1"
+            python: "3.14"
+            requirements: "homeassistant==2026.11.1 pytest pytest-asyncio pytest-cov pytest-timeout pytest-xdist"
     steps:
       - name: Check out code from GitHub
         uses: "actions/checkout@v2"
       - name: Setup Python
-        uses: "actions/setup-python@v1"
+        uses: "actions/setup-python@v5"
         with:
-          python-version: "3.13"
+          python-version: ${{ matrix.python }}
       - name: Install requirements
-        run: python3 -m pip install -r requirements_test.txt
+        run: python3 -m pip install ${{ matrix.requirements }}
       - name: Run tests
         run: |
           pytest \

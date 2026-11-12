@@ -2,6 +2,7 @@
 
 import asyncio
 from copy import deepcopy
+import inspect
 import json
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock, patch
@@ -74,6 +75,9 @@ def client():
 async def coordinator(tmp_path, client):
     """Use the real Home Assistant coordinator without starting HA."""
     hass = HomeAssistant(str(tmp_path))
+    from homeassistant.helpers import frame
+    if hasattr(frame, "async_setup"):
+        frame.async_setup(hass)
     with patch("custom_components.netgear_wax.async_get_clientsession"):
         result = NetgearDataUpdateCoordinator(
             hass, "ap.example", 443, "admin", "test-password", "test-mac", "test-entry"
@@ -521,10 +525,15 @@ async def test_pending_setup_cleanup_without_integration_unload(setup_env, chang
     from homeassistant.helpers.dispatcher import async_dispatcher_send
 
     hass, fake_entry = setup_env
+    entry_kwargs = (
+        {"subentries_data": []}
+        if "subentries_data" in inspect.signature(ConfigEntry).parameters else {}
+    )
     entry = ConfigEntry(
         data=fake_entry.data, discovery_keys=MappingProxyType({}), domain=DOMAIN,
         entry_id=fake_entry.entry_id, minor_version=1, options={}, source="user",
         title="AP", unique_id="test", version=1, state=ConfigEntryState.SETUP_RETRY,
+        **entry_kwargs,
     )
     with pytest.raises(ConfigEntryNotReady):
         await async_setup_entry(hass, entry)
@@ -611,3 +620,28 @@ async def test_pending_listeners_are_removed_after_success(setup_env):
     await hass.async_block_till_done(wait_background_tasks=True)
     coordinator.async_stop.assert_not_awaited()
     assert hass.data[DOMAIN][entry.entry_id] is coordinator
+
+
+async def test_force_update_fetches_data_with_automatic_polling_disabled(coordinator):
+    """The update_entity service must refresh even with should_poll disabled."""
+    from homeassistant.helpers.entity_component import DATA_INSTANCES, async_update_entity
+
+    coordinator.config_entry = SimpleNamespace(pref_disable_polling=True)
+    coordinator._async_update_data = AsyncMock(return_value=DeviceState())
+    entity = NetgearBaseEntity(coordinator, coordinator.config_entry)
+    entity.hass = coordinator.hass
+    entity.entity_id = "sensor.manual_refresh"
+    entity._async_write_ha_state = Mock()
+    coordinator.hass.data[DATA_INSTANCES] = {
+        "sensor": SimpleNamespace(get_entity=Mock(return_value=entity))
+    }
+    unsubscribe = coordinator.async_add_listener(Mock())
+    try:
+        assert entity.should_poll is False
+        await async_update_entity(coordinator.hass, entity.entity_id)
+        coordinator._async_update_data.assert_awaited_once()
+        entity._async_write_ha_state.assert_called_once()
+        assert coordinator._unsub_refresh is None
+    finally:
+        unsubscribe()
+        await coordinator.async_shutdown()
