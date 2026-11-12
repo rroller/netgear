@@ -60,7 +60,7 @@ class NetgearFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     @staticmethod
     @callback
     def async_get_options_flow(config_entry):
-        return NetgearOptionsFlowHandler(config_entry)
+        return NetgearOptionsFlowHandler()
 
     async def _show_config_form(self, user_input):  # pylint: disable=unused-argument
         """Show the configuration form to edit location data."""
@@ -113,10 +113,9 @@ class NetgearFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 class NetgearOptionsFlowHandler(config_entries.OptionsFlow):
     """Netgear config flow options handler."""
 
-    def __init__(self, config_entry):
+    def __init__(self):
         """Initialize HACS options flow."""
-        self.config_entry = config_entry
-        self.options = dict(config_entry.options)
+        self.options = None
 
     async def async_step_init(self, user_input=None):  # pylint: disable=unused-argument
         """Manage the options."""
@@ -124,6 +123,9 @@ class NetgearOptionsFlowHandler(config_entries.OptionsFlow):
 
     async def async_step_user(self, user_input=None):
         """Handle a flow initialized by the user."""
+        # Home Assistant attaches the config entry after constructing the flow.
+        if self.options is None:
+            self.options = dict(self.config_entry.options)
         if user_input is not None:
             self.options.update(user_input)
             return await self._update_options()
